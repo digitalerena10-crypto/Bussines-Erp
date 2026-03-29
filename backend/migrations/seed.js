@@ -26,7 +26,7 @@ const seedAdminUser = async () => {
 
         if (existingAdmin.rows.length > 0) {
             logger.info('✅ Default admin user already exists.');
-            process.exit(0);
+            return;
         }
 
         // Create new admin user
