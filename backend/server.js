@@ -12,6 +12,29 @@ const { apiLimiter } = require('./middlewares/rateLimiter');
 
 const app = express();
 
+// ─── TEMP DEBUG CORS (Uncomment to bypass all CORS rules for testing)
+// app.use(cors());
+
+// ─── STRICT PRODUCTION CORS ─────────────────────────────────────────
+const corsOptions = {
+    // 1. Allow ONLY this exact Vercel frontend URL
+    origin: 'https://bussines-erp-s6ea.vercel.app', 
+    
+    // 2. Enable credentials (cookies, authorization headers, etc.)
+    credentials: true,
+    
+    // 3. Enable exactly these methods
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    
+    // 4. Allowed headers (standard API headers)
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept']
+};
+
+app.use(cors(corsOptions));
+
+// Properly handle preflight OPTIONS requests using the EXACT same rules
+app.options('*', cors(corsOptions));
+
 // ─── Optimization & Security ────────────────────────────────────────
 app.use(compression());
 app.use(helmet({
@@ -19,29 +42,6 @@ app.use(helmet({
     crossOriginEmbedderPolicy: env.nodeEnv === 'production',
     crossOriginResourcePolicy: false
 }));
-
-// ─── TEMP DEBUG CORS (Uncomment to bypass all CORS rules for testing)
-// app.use(cors());
-
-// ─── STRICT PRODUCTION CORS ─────────────────────────────────────────
-app.use(
-    cors({
-        // 1. Allow ONLY this exact Vercel frontend URL
-        origin: 'https://bussines-erp-s6ea.vercel.app', 
-        
-        // 2. Enable credentials (cookies, authorization headers, etc.)
-        credentials: true,
-        
-        // 3. Enable exactly these methods
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        
-        // 4. Allowed headers (standard API headers)
-        allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept']
-    })
-);
-
-// Properly handle preflight OPTIONS requests for all routes natively
-app.options('*', cors());
 
 // ─── Body Parsing ───────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
