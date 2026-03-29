@@ -1,11 +1,20 @@
 const { handleMockQuery } = require('../utils/mockDb');
 const logger = require('../utils/logger');
 
+// In-memory settings store (persists across requests within the same server session)
+let settingsStore = {
+    company_name: 'ERP Corp',
+    company_email: 'admin@erpcorp.com',
+    company_phone: '+1 (555) 123-4567',
+    address: '123 Tech Avenue, SP',
+    currency: 'USD',
+    timezone: 'UTC',
+    logo_url: null
+};
+
 const getSettings = async (req, res, next) => {
     try {
-        const query = 'SELECT * FROM settings LIMIT 1';
-        const result = await handleMockQuery(query);
-        res.json({ success: true, data: result.rows ? result.rows[0] : (result[0] || {}) });
+        res.json({ success: true, data: settingsStore });
     } catch (err) {
         next(err);
     }
@@ -14,12 +23,20 @@ const getSettings = async (req, res, next) => {
 const updateSettings = async (req, res, next) => {
     try {
         const { company_name, company_email, company_phone, address, currency, timezone, logo_url } = req.body;
-        // In mock mode, we just return success with the updated data
-        logger.info('System settings updated', { user: req.user.id });
+        // Persist to in-memory store
+        if (company_name !== undefined) settingsStore.company_name = company_name;
+        if (company_email !== undefined) settingsStore.company_email = company_email;
+        if (company_phone !== undefined) settingsStore.company_phone = company_phone;
+        if (address !== undefined) settingsStore.address = address;
+        if (currency !== undefined) settingsStore.currency = currency;
+        if (timezone !== undefined) settingsStore.timezone = timezone;
+        if (logo_url !== undefined) settingsStore.logo_url = logo_url;
+
+        logger.info('System settings updated', { user: req.user.id, settings: settingsStore });
         res.json({
             success: true,
             message: 'Settings updated successfully',
-            data: { company_name, company_email, company_phone, address, currency, timezone, logo_url }
+            data: settingsStore
         });
     } catch (err) {
         next(err);
@@ -60,3 +77,4 @@ module.exports = {
     getAuditLogs,
     getSystemHealth
 };
+

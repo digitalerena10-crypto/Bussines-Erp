@@ -52,6 +52,8 @@ const ProductForm = ({ onSuccess, onCancel, categories = [], suppliers = [], ini
             tax_rate: Number(formData.tax_rate) || 0,
             stock_quantity: Number(formData.stock_quantity) || 0,
             min_stock_level: Number(formData.min_stock_level) || 0,
+            category_id: formData.category_id || null,
+            supplier_id: formData.supplier_id || null
         };
 
         mutation.mutate(payload);

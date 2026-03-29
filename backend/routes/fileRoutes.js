@@ -8,5 +8,6 @@ router.use(authenticate);
 
 router.post('/upload', upload.single('file'), FileController.uploadFile);
 router.get('/', FileController.getFiles);
+router.delete('/:id', FileController.deleteFile);
 
 module.exports = router;

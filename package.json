@@ -1,0 +1,29 @@
+{
+  "name": "software",
+  "version": "1.0.0",
+  "description": "A modern, scalable, and enterprise-grade ERP software suite.",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start": "npm run migrate --prefix backend && npm start --prefix backend",
+    "build": "npm install --prefix backend",
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AAMISHKHAN0/Bussiness-Erp-Software.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AAMISHKHAN0/Bussiness-Erp-Software/issues"
+  },
+  "homepage": "https://github.com/AAMISHKHAN0/Bussiness-Erp-Software#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

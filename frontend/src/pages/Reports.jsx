@@ -55,66 +55,78 @@ const Reports = () => {
 
     if (loading && !salesData.length) {
         return (
-            <div className="flex items-center justify-center h-full min-h-[400px]">
-                <Loader2 className="animate-spin text-primary-600" size={40} />
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fadeIn pb-20">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Advanced Business Intelligence</h1>
-                    <p className="text-gray-500">Drill down into your business metrics and performance.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2 md:gap-3">
+                        <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
+                        Advanced Business Intelligence
+                    </h1>
+                    <p className="text-sm md:text-base text-gray-500 font-medium mt-1">Drill down into your business metrics and performance.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                        <Filter size={16} className="text-gray-400" />
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full sm:w-auto">
+                        <Filter size={18} className="text-gray-400" />
                         <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="text-sm bg-transparent border-none outline-none font-medium text-gray-700"
+                            className="text-sm md:text-base bg-transparent border-none outline-none font-bold text-gray-700 w-full"
                         >
                             <option value="">All Months</option>
                             {['Jan', 'Feb', 'Mar', 'Apr'].map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                     </div>
-                    <button className="btn-primary flex items-center gap-2">
-                        <Download size={18} />
-                        Export Data
+                    <button className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 whitespace-nowrap bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl px-5 py-2.5 font-bold shadow-md shadow-indigo-500/20 md:text-base">
+                        <Download size={18} /> Export Data
                     </button>
                 </div>
             </div>
 
             {/* KPI Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: 'Revenue Growth', value: '+14.2%', target: '15%', progress: 92, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Profit Margin', value: '28.5%', target: '25%', progress: 100, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Operating Cost', value: '$12k/mo', target: '$15k', progress: 80, color: 'text-purple-600', bg: 'bg-purple-50' },
-                    { label: 'Customer Churn', value: '1.2%', target: '<2%', progress: 100, color: 'text-rose-600', bg: 'bg-rose-50' },
-                ].map((kpi, i) => (
-                    <div key={i} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{kpi.label}</p>
-                            <div className={`${kpi.bg} p-1.5 rounded-md`}>
-                                <ArrowUpRight size={14} className={kpi.color} />
+                {(() => {
+                    const totalRevenue = salesData.reduce((s, d) => s + Number(d.revenue || 0), 0);
+                    const totalPayroll = hrData.reduce((s, d) => s + Number(d.total_salary || 0), 0);
+                    const totalEmployees = hrData.reduce((s, d) => s + Number(d.count || 0), 0);
+                    const grossProfit = totalRevenue - totalPayroll;
+                    const profitMargin = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0';
+
+                    const kpis = [
+                        { label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}`, target: 'All Time', progress: totalRevenue > 0 ? 100 : 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { label: 'Profit Margin', value: `${profitMargin}%`, target: `Revenue: $${totalRevenue.toLocaleString()}`, progress: Math.min(Number(profitMargin), 100), color: 'text-green-600', bg: 'bg-green-50' },
+                        { label: 'Monthly Payroll', value: `$${totalPayroll.toLocaleString()}`, target: `${totalEmployees} Staff`, progress: totalPayroll > 0 ? 75 : 0, color: 'text-purple-600', bg: 'bg-purple-50' },
+                        { label: 'Departments', value: `${hrData.length}`, target: `${totalEmployees} Employees`, progress: hrData.length > 0 ? 100 : 0, color: 'text-rose-600', bg: 'bg-rose-50' },
+                    ];
+
+                    return kpis.map((kpi, i) => (
+                        <div key={i} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{kpi.label}</p>
+                                <div className={`${kpi.bg} p-1.5 rounded-md`}>
+                                    <ArrowUpRight size={14} className={kpi.color} />
+                                </div>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-2xl font-bold text-gray-900">{kpi.value}</h3>
+                                <span className="text-xs text-gray-400">{kpi.target}</span>
+                            </div>
+                            <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-1000 ${kpi.color.replace('text', 'bg')}`}
+                                    style={{ width: `${kpi.progress}%` }}
+                                />
                             </div>
                         </div>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-2xl font-bold text-gray-900">{kpi.value}</h3>
-                            <span className="text-xs text-gray-400">Target: {kpi.target}</span>
-                        </div>
-                        <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all duration-1000 ${kpi.color.replace('text', 'bg')}`}
-                                style={{ width: `${kpi.progress}%` }}
-                            />
-                        </div>
-                    </div>
-                ))}
+                    ));
+                })()}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,16 +216,20 @@ const Reports = () => {
                             </p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg text-center">
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Growth Index</p>
-                            <div className="flex items-center justify-center gap-1 text-green-600 font-bold">
-                                <ArrowUpRight size={16} />
-                                +4.5%
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Contribution</p>
+                            <div className="flex items-center justify-center gap-1 text-primary-600 font-bold">
+                                {(() => {
+                                    const total = salesData.reduce((s, d) => s + Number(d.revenue || 0), 0);
+                                    const val = drillDownData.revenue || drillDownData.total_value || 0;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                                    return `${pct}%`;
+                                })()}
                             </div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg text-right">
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">Status</p>
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase">
-                                Optimized
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(drillDownData.revenue || drillDownData.total_value) > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                {(drillDownData.revenue || drillDownData.total_value) > 0 ? 'Active' : 'No Data'}
                             </span>
                         </div>
                     </div>

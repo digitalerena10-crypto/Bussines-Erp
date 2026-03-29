@@ -13,6 +13,7 @@ router.get('/orders/:id', authorize('view_sales'), SalesOrderController.getOrder
 
 // Manage sales orders
 router.post('/orders', authorize('manage_sales'), SalesOrderController.createOrder);
+router.put('/orders/:id', authorize('manage_sales'), SalesOrderController.updateOrder);
 
 // Invoices
 router.get('/invoices', authorize('view_sales'), InvoiceController.getInvoices);

@@ -11,5 +11,7 @@ router.get('/', authorize('view_inventory'), CategoryController.getCategories);
 
 // Manage categories
 router.post('/', authorize('manage_inventory'), CategoryController.createCategory);
+router.put('/:id', authorize('manage_inventory'), CategoryController.updateCategory);
+router.delete('/:id', authorize('manage_inventory'), CategoryController.deleteCategory);
 
 module.exports = router;

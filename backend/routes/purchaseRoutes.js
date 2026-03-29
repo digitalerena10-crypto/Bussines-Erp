@@ -12,6 +12,7 @@ router.get('/orders/:id', authorize('view_purchases'), PurchaseOrderController.g
 
 // Manage purchase orders
 router.post('/orders', authorize('manage_purchases'), PurchaseOrderController.createOrder);
+router.put('/orders/:id', authorize('manage_purchases'), PurchaseOrderController.updateOrder);
 router.post('/grn', authorize('manage_purchases'), PurchaseOrderController.createGRN);
 
 module.exports = router;

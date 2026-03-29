@@ -1,5 +1,11 @@
 const ApiError = require('../utils/ApiError');
 
+// In-memory store for mock uploaded files
+let uploadedFiles = [
+    { id: '1', name: 'invoice_march.pdf', type: 'application/pdf', size: 102450, uploadedAt: '2024-03-01' },
+    { id: '2', name: 'office_profile.jpg', type: 'image/jpeg', size: 450000, uploadedAt: '2024-03-05' }
+];
+
 class FileController {
     /**
      * POST /api/files/upload
@@ -12,18 +18,21 @@ class FileController {
 
             console.log(`[Storage] File uploaded: ${req.file.filename} (${req.file.size} bytes)`);
 
-            // In a real app, we would save metadata to the DB here.
-            // For now, we return the file details.
+            const newFile = {
+                id: Date.now().toString(),
+                name: req.file.originalname,
+                type: req.file.mimetype,
+                size: req.file.size,
+                uploadedAt: new Date().toISOString(),
+                url: `/uploads/${req.file.filename}`
+            };
+
+            uploadedFiles.unshift(newFile);
+
             res.status(201).json({
                 success: true,
                 message: 'File uploaded successfully',
-                data: {
-                    filename: req.file.filename,
-                    originalName: req.file.originalname,
-                    mimetype: req.file.mimetype,
-                    size: req.file.size,
-                    url: `/uploads/${req.file.filename}`
-                }
+                data: newFile
             });
         } catch (error) {
             next(error);
@@ -35,13 +44,31 @@ class FileController {
      */
     static async getFiles(req, res, next) {
         try {
-            // Return mock list of files for demonstration
             res.json({
                 success: true,
-                data: [
-                    { id: '1', name: 'invoice_march.pdf', type: 'application/pdf', size: 102450, uploadedAt: '2024-03-01' },
-                    { id: '2', name: 'office_profile.jpg', type: 'image/jpeg', size: 450000, uploadedAt: '2024-03-05' }
-                ]
+                data: uploadedFiles
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * DELETE /api/files/:id
+     */
+    static async deleteFile(req, res, next) {
+        try {
+            const { id } = req.params;
+            const initialLength = uploadedFiles.length;
+            uploadedFiles = uploadedFiles.filter(f => f.id !== id);
+
+            if (uploadedFiles.length === initialLength) {
+                throw ApiError.notFound('File not found');
+            }
+
+            res.json({
+                success: true,
+                message: 'File deleted successfully'
             });
         } catch (error) {
             next(error);

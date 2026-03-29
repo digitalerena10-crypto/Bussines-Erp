@@ -16,7 +16,8 @@ const app = express();
 app.use(compression());
 app.use(helmet({
     contentSecurityPolicy: env.nodeEnv === 'production',
-    crossOriginEmbedderPolicy: env.nodeEnv === 'production'
+    crossOriginEmbedderPolicy: env.nodeEnv === 'production',
+    crossOriginResourcePolicy: false
 }));
 
 // ─── CORS ───────────────────────────────────────────────────────────
@@ -34,7 +35,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Static Files ───────────────────────────────────────────────────
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', (req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // ─── Rate Limiting ──────────────────────────────────────────────────
 app.use('/api', apiLimiter);

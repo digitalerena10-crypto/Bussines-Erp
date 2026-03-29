@@ -21,6 +21,7 @@ const CreateSalesOrder = () => {
 
     // Form State
     const [customerId, setCustomerId] = useState('');
+    const [status, setStatus] = useState('Pending');
     const [notes, setNotes] = useState('');
     const [items, setItems] = useState([
         { id: Date.now(), product_id: '', quantity: 1, unit_price: 0, tax: 0, discount: 0 }
@@ -98,6 +99,7 @@ const CreateSalesOrder = () => {
         const payload = {
             customer_id: customerId,
             branch_id: '1',
+            status,
             items: items.map(i => ({
                 product_id: i.product_id,
                 quantity: Number(i.quantity),
@@ -112,15 +114,15 @@ const CreateSalesOrder = () => {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fadeIn">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-white rounded-lg transition-colors text-gray-500">
-                    <ArrowLeft size={20} />
+                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
+                    <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Create Sales Order</h1>
-                    <p className="text-sm text-gray-500 mt-1">Draft a new sales order for a customer.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Create Sales Order</h1>
+                    <p className="text-sm md:text-base text-gray-500 font-medium mt-1">Draft a new sales order for a customer.</p>
                 </div>
             </div>
 
@@ -137,11 +139,13 @@ const CreateSalesOrder = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
-                            <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-gray-50 text-gray-500" disabled>
-                                <option>Pending</option>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
+                            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white">
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
                             </select>
-                            <span className="text-xs text-gray-400 mt-1 block">Invoices manage payment status.</span>
+                            <span className="text-xs text-gray-400 mt-1 block">Current status of the sales order.</span>
                         </div>
                     </div>
                 </div>

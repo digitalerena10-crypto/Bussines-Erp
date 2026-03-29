@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Truck, ShoppingBag, Receipt, Loader2, AlertCircle, Plus, Search, FileText, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import { exportToCSV } from '../utils/exportUtils';
-import Modal from '../components/common/Modal';
-import ActionButtons from '../components/common/ActionButtons';
-import SupplierForm from '../components/forms/SupplierForm';
-import GrnForm from '../components/forms/GrnForm';
+import api from '@/services/api';
+import { exportToCSV } from '@/utils/exportUtils';
+import Modal from '@/components/common/Modal';
+import ActionButtons from '@/components/common/ActionButtons';
+import SupplierForm from '@/components/forms/SupplierForm';
+import GrnForm from '@/components/forms/GrnForm';
 
 const Purchase = () => {
     const [activeTab, setActiveTab] = useState('orders');
@@ -32,6 +32,7 @@ const Purchase = () => {
 
     const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
     const [isGrnModalOpen, setIsGrnModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const deleteMutation = useMutation({
         mutationFn: ({ endpoint, id }) => api.delete(`${endpoint}/${id}`),
@@ -43,6 +44,14 @@ const Purchase = () => {
 
     const purchaseData = data || { orders: [], suppliers: [], grn: [] };
 
+    const getFilteredData = (list) => {
+        if (!searchTerm) return list;
+        return list.filter(item => {
+            const str = JSON.stringify(item).toLowerCase();
+            return str.includes(searchTerm.toLowerCase());
+        });
+    };
+
     const handleExport = () => {
         if (activeTab === 'orders') exportToCSV(purchaseData.orders, 'PurchaseOrders_Export');
         if (activeTab === 'suppliers') exportToCSV(purchaseData.suppliers, 'Suppliers_Export');
@@ -50,15 +59,19 @@ const Purchase = () => {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fadeIn">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Purchase Management</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage suppliers, purchase orders, and procurement.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2 md:gap-3">
+                        <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
+                        Procurement Hub
+                    </h1>
+                    <p className="text-sm md:text-base text-gray-500 font-medium mt-1">Manage suppliers, purchase operations, and goods receiving.</p>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                    <button onClick={handleExport} className="btn-secondary flex items-center justify-center gap-2 whitespace-nowrap bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg px-4 py-2 font-medium transition-colors">
-                        <Download size={18} /> Export
+                <div className="flex gap-3 w-full md:w-auto">
+                    <button onClick={handleExport} className="flex-1 md:flex-none btn-secondary flex items-center justify-center gap-2 whitespace-nowrap bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl px-4 md:px-5 py-2.5 font-bold shadow-sm transition-all active:scale-95 text-sm md:text-base">
+                        <Download size={18} /> <span className="hidden sm:inline">Export Current Ledger</span><span className="sm:hidden">Export</span>
                     </button>
                     <button
                         onClick={() => {
@@ -66,86 +79,103 @@ const Purchase = () => {
                             if (activeTab === 'suppliers') setIsSupplierModalOpen(true);
                             if (activeTab === 'grn') setIsGrnModalOpen(true);
                         }}
-                        className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap"
+                        className="flex-1 md:flex-none btn-primary flex items-center justify-center gap-2 whitespace-nowrap bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl px-4 md:px-5 py-2.5 font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 text-sm md:text-base"
                     >
                         <Plus size={18} />
-                        Create {activeTab === 'orders' ? 'Purchase Order' : activeTab === 'suppliers' ? 'Supplier' : 'GRN'}
+                        <span className="hidden sm:inline">Create {activeTab === 'orders' ? 'Purchase Order' : activeTab === 'suppliers' ? 'Supplier' : 'GRN'}</span>
+                        <span className="sm:hidden">New {activeTab === 'orders' ? 'PO' : activeTab === 'suppliers' ? 'Supplier' : 'GRN'}</span>
                     </button>
                 </div>
             </div>
 
-            <div className="flex border-b border-gray-200 hide-scrollbar overflow-x-auto">
-                <button onClick={() => setActiveTab('orders')} className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'orders' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                    <ShoppingBag size={18} /> Purchase Orders
-                </button>
-                <button onClick={() => setActiveTab('suppliers')} className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'suppliers' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                    <Truck size={18} /> Suppliers
-                </button>
-                <button onClick={() => setActiveTab('grn')} className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'grn' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                    <Receipt size={18} /> Goods Receiving
-                </button>
+            {/* Navigation Tabs */}
+            <div className="bg-white rounded-2xl p-2 border border-gray-100 shadow-sm overflow-x-auto hide-scrollbar">
+                <div className="flex items-center min-w-max">
+                    <button onClick={() => setActiveTab('orders')} className={`flex items-center gap-2 px-6 py-3 text-sm md:text-base font-black rounded-xl transition-all duration-300 ${activeTab === 'orders' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border border-transparent'}`}>
+                        <ShoppingBag size={18} /> Orders <span className="text-[10px] ml-1 bg-indigo-100/50 text-indigo-600 px-2 py-0.5 rounded-full">{purchaseData.orders.length}</span>
+                    </button>
+                    <button onClick={() => setActiveTab('suppliers')} className={`flex items-center gap-2 px-6 py-3 text-sm md:text-base font-black rounded-xl transition-all duration-300 ${activeTab === 'suppliers' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border border-transparent'}`}>
+                        <Truck size={18} /> Suppliers <span className="text-[10px] ml-1 bg-indigo-100/50 text-indigo-600 px-2 py-0.5 rounded-full">{purchaseData.suppliers.length}</span>
+                    </button>
+                    <button onClick={() => setActiveTab('grn')} className={`flex items-center gap-2 px-6 py-3 text-sm md:text-base font-black rounded-xl transition-all duration-300 ${activeTab === 'grn' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border border-transparent'}`}>
+                        <Receipt size={18} /> Goods Receiving <span className="text-[10px] ml-1 bg-indigo-100/50 text-indigo-600 px-2 py-0.5 rounded-full">{purchaseData.grn.length}</span>
+                    </button>
+                </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input type="text" placeholder={`Search ${activeTab}...`} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all" />
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative flex-1 w-full max-w-lg">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={`Search ${activeTab} dataset...`} className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm md:text-base font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm" />
                 </div>
-                <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
-                    <option>All Statuses</option>
-                    <option>Ordered</option>
-                    <option>Received</option>
-                    <option>Cancelled</option>
+                <select className="w-full sm:w-auto bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm md:text-base font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm cursor-pointer appearance-none">
+                    <option>Filter: All Statuses</option>
+                    <option>Filter: Ordered</option>
+                    <option>Filter: Received</option>
+                    <option>Filter: Cancelled</option>
                 </select>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
+            {/* Main Data Container */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px] md:min-h-[500px] overflow-hidden">
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-                        <p className="text-gray-500">Loading purchase data...</p>
+                    <div className="flex flex-col items-center justify-center h-64 md:h-96 space-y-4">
+                        <Loader2 className="w-8 h-8 md:w-10 md:h-10 text-indigo-500 animate-spin" />
+                        <p className="text-gray-500 font-bold text-sm md:text-base">Synchronizing procurement node...</p>
                     </div>
                 ) : error ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4 max-w-md mx-auto text-center p-6 bg-gray-50 rounded-lg m-6 border border-gray-100">
-                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-2"><AlertCircle size={24} /></div>
-                        <h3 className="text-lg font-medium text-gray-900">Database Offline</h3>
-                        <p className="text-gray-500 text-sm">The backend cannot connect to the database.</p>
+                    <div className="flex flex-col items-center justify-center h-64 md:h-96 space-y-4 max-w-md mx-auto text-center p-6 bg-red-50/50 rounded-2xl m-6 border border-red-100">
+                        <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><AlertCircle className="w-6 h-6 md:w-8 md:h-8" /></div>
+                        <h3 className="text-lg md:text-xl font-black text-red-900">Connection Terminated</h3>
+                        <p className="text-red-700/80 font-medium text-sm md:text-base">The client cannot connect to the backend database server.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full pb-4">
                         {activeTab === 'orders' && (
-                            purchaseData.orders.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100"><ShoppingBag size={32} className="text-gray-400" /></div>
-                                    <h3 className="text-lg font-medium text-gray-900">No purchase orders found</h3>
-                                    <p className="text-gray-500 text-sm">Create your first purchase order to see it here.</p>
+                            getFilteredData(purchaseData.orders).length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 md:h-96 space-y-4 text-center">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-3xl flex items-center justify-center border border-gray-100"><ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-gray-400" /></div>
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900">Empty Purchase Ledger</h3>
+                                    <p className="text-gray-500 text-sm md:text-base font-medium">Create your first purchase order to populate this view.</p>
                                 </div>
                             ) : (
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-100">
+                                <table className="w-full text-left min-w-[800px]">
+                                    <thead className="bg-gray-50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider font-black border-b border-gray-100">
                                         <tr>
-                                            <th className="px-6 py-4">PO Number</th>
-                                            <th className="px-6 py-4">Supplier</th>
-                                            <th className="px-6 py-4">Total Amount</th>
-                                            <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Expected Date</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
+                                            <th className="px-4 md:px-6 py-4">PO Reference</th>
+                                            <th className="px-4 md:px-6 py-4">Supplier Entity</th>
+                                            <th className="px-4 md:px-6 py-4">Gross Amount</th>
+                                            <th className="px-4 md:px-6 py-4">Fulfillment Status</th>
+                                            <th className="px-4 md:px-6 py-4">Expected Date</th>
+                                            <th className="px-4 md:px-6 py-4 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {purchaseData.orders.map(order => (
-                                            <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 font-medium text-primary-600">{order.po_number}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-900">{order.supplier_name}</td>
-                                                <td className="px-6 py-4 text-sm font-semibold text-gray-900">${parseFloat(order.total_amount).toLocaleString()}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' || order.status === 'Received' ? 'bg-emerald-100 text-emerald-800' : order.status === 'Pending' || order.status === 'Ordered' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
+                                        {getFilteredData(purchaseData.orders).map(order => (
+                                            <tr key={order.id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="px-4 md:px-6 py-4 font-black text-indigo-600 group-hover:text-indigo-700 text-sm md:text-base cursor-pointer">
+                                                    {order.po_number}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-bold text-gray-800">
+                                                    {order.supplier_name}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
+                                                    ${parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border ${order.status === 'Completed' || order.status === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : order.status === 'Pending' || order.status === 'Ordered' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
                                                         {order.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">{order.expected_date ? new Date(order.expected_date).toLocaleDateString() : '-'}</td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <ActionButtons onDelete={() => deleteMutation.mutate({ endpoint: '/purchases/orders', id: order.id })} />
+                                                <td className="px-4 md:px-6 py-4 text-xs md:text-sm font-bold text-gray-500">
+                                                    {order.expected_date ? new Date(order.expected_date).toLocaleDateString() : '-'}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-right">
+                                                    <ActionButtons
+                                                        onEdit={() => navigate(`/purchases/${order.id}/edit`)}
+                                                        onDelete={() => deleteMutation.mutate({ endpoint: '/purchases/orders', id: order.id })}
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}
@@ -155,31 +185,38 @@ const Purchase = () => {
                         )}
 
                         {activeTab === 'suppliers' && (
-                            purchaseData.suppliers.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100"><Truck size={32} className="text-gray-400" /></div>
-                                    <h3 className="text-lg font-medium text-gray-900">No suppliers found</h3>
-                                    <p className="text-gray-500 text-sm">Create your first supplier record to see it here.</p>
+                            getFilteredData(purchaseData.suppliers).length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 md:h-96 space-y-4 text-center">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-3xl flex items-center justify-center border border-gray-100"><Truck className="w-8 h-8 md:w-10 md:h-10 text-gray-400" /></div>
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900">No Suppliers Found</h3>
+                                    <p className="text-gray-500 text-sm md:text-base font-medium">Create your first supplier record to see it here.</p>
                                 </div>
                             ) : (
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-100">
+                                <table className="w-full text-left min-w-[700px]">
+                                    <thead className="bg-gray-50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider font-black border-b border-gray-100">
                                         <tr>
-                                            <th className="px-6 py-4">Name</th>
-                                            <th className="px-6 py-4">Contact Person</th>
-                                            <th className="px-6 py-4">Email</th>
-                                            <th className="px-6 py-4">Phone</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
+                                            <th className="px-4 md:px-6 py-4">Supplier Entity</th>
+                                            <th className="px-4 md:px-6 py-4">Point of Contact</th>
+                                            <th className="px-4 md:px-6 py-4">Email Channel</th>
+                                            <th className="px-4 md:px-6 py-4">Voice Channel</th>
+                                            <th className="px-4 md:px-6 py-4 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {purchaseData.suppliers.map(supplier => (
-                                            <tr key={supplier.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 font-medium text-gray-900">{supplier.name}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{supplier.contact_person || '-'}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{supplier.email || '-'}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{supplier.phone || '-'}</td>
-                                                <td className="px-6 py-4 text-right">
+                                        {getFilteredData(purchaseData.suppliers).map(supplier => (
+                                            <tr key={supplier.id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="px-4 md:px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center font-black text-indigo-700 text-sm md:text-base shrink-0">
+                                                            {supplier.name?.charAt(0)?.toUpperCase()}
+                                                        </div>
+                                                        <span className="font-bold text-gray-900 text-sm md:text-base">{supplier.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-medium text-gray-600">{supplier.contact_person || '-'}</td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-medium text-gray-600">{supplier.email || '-'}</td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-medium text-gray-600">{supplier.phone || '-'}</td>
+                                                <td className="px-4 md:px-6 py-4 text-right">
                                                     <ActionButtons onDelete={() => deleteMutation.mutate({ endpoint: '/suppliers', id: supplier.id })} />
                                                 </td>
                                             </tr>
@@ -190,30 +227,36 @@ const Purchase = () => {
                         )}
 
                         {activeTab === 'grn' && (
-                            purchaseData.grn.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100"><FileText size={32} className="text-gray-400" /></div>
-                                    <h3 className="text-lg font-medium text-gray-900">No GRNs found</h3>
-                                    <p className="text-gray-500 text-sm">Create a Goods Receiving Note to see it here.</p>
+                            getFilteredData(purchaseData.grn).length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 md:h-96 space-y-4 text-center">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-3xl flex items-center justify-center border border-gray-100"><FileText className="w-8 h-8 md:w-10 md:h-10 text-gray-400" /></div>
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900">Empty GRN Ledger</h3>
+                                    <p className="text-gray-500 text-sm md:text-base font-medium">Create a Goods Receiving Note to populate ledger.</p>
                                 </div>
                             ) : (
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-100">
+                                <table className="w-full text-left min-w-[700px]">
+                                    <thead className="bg-gray-50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider font-black border-b border-gray-100">
                                         <tr>
-                                            <th className="px-6 py-4">GRN Number</th>
-                                            <th className="px-6 py-4">PO Reference</th>
-                                            <th className="px-6 py-4">Received Date</th>
-                                            <th className="px-6 py-4">Status</th>
+                                            <th className="px-4 md:px-6 py-4">GRN Hash</th>
+                                            <th className="px-4 md:px-6 py-4">PO Reference</th>
+                                            <th className="px-4 md:px-6 py-4">Received Date</th>
+                                            <th className="px-4 md:px-6 py-4">Collection Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {purchaseData.grn.map(receipt => (
-                                            <tr key={receipt.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 font-medium text-primary-600">{receipt.grn_number}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{receipt.po_number || '-'}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">{new Date(receipt.received_date).toLocaleDateString()}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Received</span>
+                                        {getFilteredData(purchaseData.grn).map(receipt => (
+                                            <tr key={receipt.id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="px-4 md:px-6 py-4 font-black text-indigo-600 group-hover:text-indigo-700 text-sm md:text-base cursor-pointer">
+                                                    {receipt.grn_number}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-sm md:text-base font-bold text-gray-800">
+                                                    {receipt.po_number || '-'}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4 text-xs md:text-sm font-bold text-gray-500">
+                                                    {new Date(receipt.received_date).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-4 md:px-6 py-4">
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border bg-emerald-50 text-emerald-700 border-emerald-100">Received</span>
                                                 </td>
                                             </tr>
                                         ))}
@@ -225,11 +268,11 @@ const Purchase = () => {
                 )}
             </div>
 
-            <Modal isOpen={isSupplierModalOpen} onClose={() => setIsSupplierModalOpen(false)} title="Add New Supplier" maxWidth="max-w-2xl">
+            <Modal isOpen={isSupplierModalOpen} onClose={() => setIsSupplierModalOpen(false)} title="Initialize Supplier Node" maxWidth="max-w-2xl">
                 <SupplierForm onSuccess={() => setIsSupplierModalOpen(false)} onCancel={() => setIsSupplierModalOpen(false)} />
             </Modal>
 
-            <Modal isOpen={isGrnModalOpen} onClose={() => setIsGrnModalOpen(false)} title="Receive Goods (GRN)" maxWidth="max-w-xl">
+            <Modal isOpen={isGrnModalOpen} onClose={() => setIsGrnModalOpen(false)} title="Execute Goods Receiving (GRN)" maxWidth="max-w-xl">
                 <GrnForm onSuccess={() => setIsGrnModalOpen(false)} onCancel={() => setIsGrnModalOpen(false)} />
             </Modal>
         </div>

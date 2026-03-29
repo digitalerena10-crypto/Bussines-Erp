@@ -1,32 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLicense } from '../../context/LicenseContext';
 import {
     Menu,
-    Bell,
     Search,
     ChevronDown,
     User,
     LogOut,
     Settings,
+    Clock,
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import SettingsModal from '../forms/SettingsModal';
+import NotificationCenter from '../common/NotificationCenter';
 
 const Header = ({ onMenuToggle }) => {
     const { user, logout } = useAuth();
+    const { tier, remainingFormatted } = useLicense();
     const [showProfile, setShowProfile] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     const profileRef = useRef(null);
-    const notifRef = useRef(null);
-
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Low Stock Alert', message: 'Product "Wireless Mouse" is below minimum threshold.', time: '10m ago', unread: true },
-        { id: 2, title: 'New Sale Order', message: 'Order #SO-1001 created by John Doe.', time: '1h ago', unread: true },
-        { id: 3, title: 'System Warning', message: 'Database backup completed successfully.', time: '1d ago', unread: false }
-    ]);
-    const unreadCount = notifications.filter(n => n.unread).length;
 
     // Close dropdown on outside click
     useEffect(() => {
@@ -34,18 +28,10 @@ const Header = ({ onMenuToggle }) => {
             if (profileRef.current && !profileRef.current.contains(event.target)) {
                 setShowProfile(false);
             }
-            if (notifRef.current && !notifRef.current.contains(event.target)) {
-                setShowNotifications(false);
-            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    const markAllRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-        setShowNotifications(false);
-    };
 
     return (
         <header className="sticky top-0 z-20 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
@@ -73,44 +59,16 @@ const Header = ({ onMenuToggle }) => {
 
             {/* Right side */}
             <div className="flex items-center gap-3">
-                {/* Notifications */}
-                <div className="relative" ref={notifRef}>
-                    <button
-                        onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                        id="notifications-btn"
-                    >
-                        <Bell size={20} />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        )}
-                    </button>
+                {/* License Timer */}
+                {tier && (
+                    <div className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-primary-50 to-violet-50 border border-primary-200 rounded-lg px-3 py-1.5" title={`${tier} License`}>
+                        <Clock size={14} className="text-primary-600" />
+                        <span className="text-xs font-bold text-primary-700 tabular-nums">{remainingFormatted}</span>
+                    </div>
+                )}
 
-                    {/* Notification Dropdown */}
-                    {showNotifications && (
-                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 animate-fadeIn z-50">
-                            <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                                <p className="text-sm font-semibold text-gray-800">Notifications ({unreadCount})</p>
-                                {unreadCount > 0 && (
-                                    <button onClick={markAllRead} className="text-xs text-primary-600 hover:text-primary-700">Mark all read</button>
-                                )}
-                            </div>
-                            <div className="max-h-64 overflow-y-auto">
-                                {notifications.length > 0 ? notifications.map(notif => (
-                                    <div key={notif.id} className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${notif.unread ? 'bg-blue-50/50' : ''}`}>
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                                            <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{notif.time}</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600 line-clamp-2">{notif.message}</p>
-                                    </div>
-                                )) : (
-                                    <div className="px-4 py-6 text-center text-sm text-gray-500">No new notifications</div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
+                {/* Dynamic Notification Center */}
+                <NotificationCenter />
 
                 {/* Profile dropdown */}
                 <div className="relative" ref={profileRef}>

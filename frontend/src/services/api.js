@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-export const RESOURCES_URL = import.meta.env.VITE_RESOURCES_URL || 'http://localhost:5000';
+const isProd = import.meta.env.PROD;
+const API_URL = import.meta.env.VITE_API_URL || (isProd ? '' : 'http://localhost:5000/api');
+export const RESOURCES_URL = import.meta.env.VITE_RESOURCES_URL || (isProd ? '' : 'http://localhost:5000');
+
+if (isProd && !import.meta.env.VITE_API_URL) {
+  console.error('VITE_API_URL is missing in production environment');
+}
 
 const api = axios.create({
     baseURL: API_URL,

@@ -12,6 +12,10 @@ import {
     ChevronRight,
     Building2,
     HardDrive,
+    UserCircle,
+    Factory,
+    TrendingUp,
+    History,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -20,9 +24,13 @@ const navigation = [
     { name: 'Inventory', to: '/inventory', icon: Package, permission: 'view_inventory' },
     { name: 'Sales', to: '/sales', icon: ShoppingCart, permission: 'view_sales' },
     { name: 'Purchases', to: '/purchases', icon: Truck, permission: 'view_purchases' },
+    { name: 'Customers', to: '/customers', icon: UserCircle, permission: 'view_sales' },
+    { name: 'Vendors', to: '/vendors', icon: Factory, permission: 'view_purchases' },
     { name: 'Accounting', to: '/accounting', icon: Calculator, permission: 'view_accounting' },
+    { name: 'Analytics', to: '/analytics', icon: TrendingUp, permission: 'view_reports' },
     { name: 'HR Management', to: '/hr', icon: Users, permission: 'view_hr' },
     { name: 'Reports', to: '/reports', icon: BarChart3, permission: 'view_reports' },
+    { name: 'Audit Logs', to: '/audit-logs', icon: History, permission: 'manage_users' },
     { name: 'Media Manager', to: '/media', icon: HardDrive, permission: 'view_media' },
     { name: 'Admin', to: '/admin', icon: Settings, permission: 'manage_users' },
 ];
@@ -50,14 +58,15 @@ const Sidebar = ({ isOpen, onToggle }) => {
 
             {/* Sidebar - CSS transition instead of framer-motion */}
             <aside
-                style={{ width: isOpen ? 256 : 80, transition: 'width 0.2s ease' }}
-                className="fixed top-0 left-0 z-40 h-screen bg-sidebar lg:relative lg:translate-x-0 shadow-2xl border-r border-white/5 overflow-hidden"
+                className={`fixed top-0 left-0 z-40 h-screen bg-sidebar lg:relative lg:translate-x-0 shadow-2xl border-r border-white/5 overflow-hidden flex flex-col transition-all duration-300 ease-in-out ${
+                    isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:w-20'
+                }`}
             >
                 {/* Logo */}
                 <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-white" />
+                            <img src="/logo.png" alt="ERP Logo" className="w-full h-full object-cover rounded-lg shadow-inner" />
                         </div>
                         {isOpen && (
                             <span className="text-white font-bold text-lg tracking-tight whitespace-nowrap">
@@ -81,8 +90,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
                             <NavLink
                                 key={item.name}
                                 to={item.to}
+                                onClick={() => {
+                                    if (window.innerWidth < 1024 && isOpen) {
+                                        onToggle();
+                                    }
+                                }}
                                 className={({ isActive }) =>
-                                    `sidebar-link ${isActive ? 'active' : ''} ${!isOpen ? 'justify-center px-2' : ''}`
+                                    `sidebar-link ${isActive ? 'active' : ''} ${!isOpen ? 'lg:justify-center lg:px-2' : ''}`
                                 }
                                 title={!isOpen ? item.name : undefined}
                             >
@@ -99,7 +113,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
                 {isOpen && (
                     <div className="absolute bottom-4 left-0 right-0 px-4">
                         <div className="text-center text-xs text-gray-600">
-                            v1.0.0 · Phase 1
+                            v2.0.0 · Enterprise
                         </div>
                     </div>
                 )}

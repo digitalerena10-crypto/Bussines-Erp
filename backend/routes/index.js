@@ -1,5 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const licenseRoutes = require('./licenseRoutes');
+
+// License routes — no auth required, must be before audit logger
+router.use('/license', licenseRoutes);
+
+const auditLogger = require('../middlewares/auditMiddleware');
+
+// Mount audit logger before specific routes to capture all mutations
+router.use(auditLogger);
 
 // Import route modules
 const healthRoutes = require('./healthRoutes');
@@ -33,7 +42,7 @@ router.use('/customers', customerRoutes);
 router.use('/sales', salesRoutes);
 router.use('/suppliers', supplierRoutes);
 router.use('/purchases', purchaseRoutes);
-router.use('/accounts', accountRoutes);
+router.use('/accounting', accountRoutes);
 router.use('/hr', hrRoutes);
 router.use('/reports', reportRoutes);
 router.use('/files', fileRoutes);

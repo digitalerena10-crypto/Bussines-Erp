@@ -71,31 +71,36 @@ class ReportController {
             const employeeRes = await pool.query('SELECT COUNT(*) as count FROM employees');
             const lowStockRes = await pool.query('SELECT p.name, i.quantity, p.min_stock_level FROM inventory i JOIN products p ON i.product_id = p.id WHERE i.quantity <= p.min_stock_level ORDER BY i.quantity ASC LIMIT 5');
 
+            const totalRevenue = parseFloat(revenueRes.rows[0].total || 0);
+            const totalSales = parseInt(salesRes.rows[0].count || 0);
+            const totalProducts = parseInt(productRes.rows[0].count || 0);
+            const totalEmployees = parseInt(employeeRes.rows[0].count || 0);
+
             const stats = [
                 {
                     title: 'Total Revenue',
-                    value: parseFloat(revenueRes.rows[0].total || 0),
-                    change: '+12.5%',
-                    trend: 'up',
+                    value: totalRevenue,
+                    change: totalRevenue > 0 ? '+' + ((totalRevenue / Math.max(totalRevenue, 1)) * 100).toFixed(0) + '%' : '0%',
+                    trend: totalRevenue > 0 ? 'up' : 'neutral',
                     isCurrency: true
                 },
                 {
                     title: 'Total Sales',
-                    value: parseInt(salesRes.rows[0].count || 0),
-                    change: '+8.2%',
-                    trend: 'up'
+                    value: totalSales,
+                    change: totalSales > 0 ? '+' + totalSales : '0',
+                    trend: totalSales > 0 ? 'up' : 'neutral'
                 },
                 {
                     title: 'Products',
-                    value: parseInt(productRes.rows[0].count || 0),
-                    change: '-2.1%',
-                    trend: 'down'
+                    value: totalProducts,
+                    change: totalProducts > 0 ? totalProducts + ' active' : '0',
+                    trend: totalProducts > 0 ? 'up' : 'neutral'
                 },
                 {
                     title: 'Employees',
-                    value: parseInt(employeeRes.rows[0].count || 0),
-                    change: '+4.3%',
-                    trend: 'up'
+                    value: totalEmployees,
+                    change: totalEmployees > 0 ? totalEmployees + ' staff' : '0',
+                    trend: totalEmployees > 0 ? 'up' : 'neutral'
                 },
                 {
                     title: 'Critical Stock',

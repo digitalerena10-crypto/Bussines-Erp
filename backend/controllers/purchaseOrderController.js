@@ -143,6 +143,90 @@ class PurchaseOrderController {
     }
 
     /**
+     * PUT /api/purchases/orders/:id
+     */
+    static async updateOrder(req, res, next) {
+        const client = await pool.connect();
+
+        try {
+            const { id } = req.params;
+            const { supplier_id, branch_id, items, status, notes, tax_amount, shipping_amount, expected_delivery_date } = req.body;
+            const user_id = req.user.id;
+
+            const required = validateRequired(req.body, ['supplier_id', 'branch_id', 'items']);
+            if (!required.valid) {
+                throw ApiError.badRequest(`Missing required fields: ${required.missing.join(', ')}`);
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                throw ApiError.badRequest('Order must contain at least one item');
+            }
+
+            await client.query('BEGIN');
+
+            const existingOrderRes = await client.query('SELECT * FROM purchase_orders WHERE id = $1', [id]);
+            if (existingOrderRes.rows.length === 0) {
+                throw ApiError.notFound('Purchase order not found');
+            }
+            const existingOrder = existingOrderRes.rows[0];
+
+            let totalAmount = 0;
+            const processedItems = [];
+
+            for (const item of items) {
+                const qty = parseFloat(item.quantity);
+                const price = parseFloat(item.unit_price);
+                const subtotal = qty * price;
+                totalAmount += subtotal;
+
+                processedItems.push({
+                    product_id: item.product_id,
+                    quantity: qty,
+                    unit_price: price,
+                    subtotal: subtotal
+                });
+            }
+
+            // Update PO header
+            const orderRes = await client.query(
+                `UPDATE purchase_orders 
+                 SET supplier_id = $1, branch_id = $2, status = $3, total_amount = $4, tax_amount = $5, shipping_amount = $6, expected_delivery_date = $7, notes = $8 
+                 WHERE id = $9 
+                 RETURNING *`,
+                [supplier_id, branch_id, status || existingOrder.status, totalAmount, tax_amount || 0, shipping_amount || 0, expected_delivery_date || null, notes || null, id]
+            );
+
+            // Delete existing items
+            await client.query('DELETE FROM purchase_order_items WHERE purchase_order_id = $1', [id]);
+
+            // Insert new items
+            for (const item of processedItems) {
+                await client.query(
+                    `INSERT INTO purchase_order_items 
+                     (purchase_order_id, product_id, quantity, unit_price, subtotal) 
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [id, item.product_id, item.quantity, item.unit_price, item.subtotal]
+                );
+            }
+
+            // (Note: GRN controls inventory increases separately, so we don't modify inventory here)
+
+            await client.query('COMMIT');
+
+            res.json({
+                success: true,
+                message: 'Purchase order updated successfully',
+                data: orderRes.rows[0]
+            });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            next(error);
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * POST /api/purchases/grn
      * Create Goods Received Note and update inventory
      */

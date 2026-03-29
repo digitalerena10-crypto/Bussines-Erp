@@ -5,19 +5,28 @@ const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const requiredVars = [
-  'DB_HOST',
-  'DB_PORT',
-  'DB_NAME',
-  'DB_USER',
-  'DB_PASSWORD',
   'JWT_SECRET',
   'JWT_REFRESH_SECRET',
 ];
 
 // Validate required environment variables
 const missing = requiredVars.filter((key) => !process.env[key]);
-if (missing.length > 0) {
-  console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+const hasDbUrl = !!process.env.DATABASE_URL;
+const hasDbParams = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME;
+
+if (missing.length > 0 || (!hasDbUrl && !hasDbParams)) {
+  console.error('\n=================================================');
+  console.error('❌ RAILWAY DEPLOYMENT ERROR [RAILWAY-FIX-V3]');
+  console.error('=================================================');
+  if (missing.length > 0) {
+    console.error(`🔴 MISSING SECURITY KEYS: ${missing.join(', ')}`);
+  }
+  if (!hasDbUrl && !hasDbParams) {
+    console.error('🔴 MISSING DATABASE: DATABASE_URL is not set.');
+  }
+  console.error('\n👉 FIX: Go to Railway Dashboard -> Variables');
+  console.error('   Ensure DATABASE_URL, JWT_SECRET, and JWT_REFRESH_SECRET are set.');
+  console.error('=================================================\n');
   process.exit(1);
 }
 
@@ -27,6 +36,7 @@ const env = {
 
   // Database
   db: {
+    connectionString: process.env.DATABASE_URL,
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     name: process.env.DB_NAME,

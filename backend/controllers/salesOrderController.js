@@ -166,6 +166,111 @@ class SalesOrderController {
             client.release();
         }
     }
+    /**
+     * PUT /api/sales/orders/:id
+     * Update an existing sales order and its items
+     */
+    static async updateOrder(req, res, next) {
+        const client = await pool.connect();
+
+        try {
+            const { id } = req.params;
+            const { customer_id, branch_id, items, status, notes } = req.body;
+            const user_id = req.user.id;
+
+            const required = validateRequired(req.body, ['customer_id', 'branch_id', 'items']);
+            if (!required.valid) {
+                throw ApiError.badRequest(`Missing required fields: ${required.missing.join(', ')}`);
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                throw ApiError.badRequest('Order must contain at least one item');
+            }
+
+            await client.query('BEGIN');
+
+            // Find existing order
+            const existingOrderRes = await client.query('SELECT * FROM sales_orders WHERE id = $1', [id]);
+            if (existingOrderRes.rows.length === 0) {
+                throw ApiError.notFound('Sales order not found');
+            }
+            const existingOrder = existingOrderRes.rows[0];
+
+            // 1. Calculate new total amount and prepare items
+            let totalAmount = 0;
+            const processedItems = [];
+
+            for (const item of items) {
+                if (!item.product_id || !item.quantity || !item.unit_price) {
+                    throw ApiError.badRequest('Each item must have product_id, quantity, and unit_price');
+                }
+
+                const qty = parseFloat(item.quantity);
+                const price = parseFloat(item.unit_price);
+                const subtotal = qty * price;
+                totalAmount += subtotal;
+
+                processedItems.push({
+                    product_id: item.product_id,
+                    quantity: qty,
+                    unit_price: price,
+                    subtotal: subtotal
+                });
+            }
+
+            // 2. Update Sales Order header
+            const orderRes = await client.query(
+                `UPDATE sales_orders 
+                 SET customer_id = $1, branch_id = $2, status = $3, total_amount = $4, net_amount = $5, notes = $6 
+                 WHERE id = $7 
+                 RETURNING *`,
+                [customer_id, branch_id, status || existingOrder.status, totalAmount, totalAmount, notes || null, id]
+            );
+
+            // 3. Handle Inventory Reverting (add back the old items)
+            const oldItemsRes = await client.query('SELECT * FROM sales_order_items WHERE sales_order_id = $1', [id]);
+            for (const oldItem of oldItemsRes.rows) {
+                await client.query(
+                    `UPDATE inventory SET quantity = quantity + $1 WHERE product_id = $2 AND branch_id = $3`,
+                    [oldItem.quantity, oldItem.product_id, existingOrder.branch_id]
+                );
+            }
+
+            // 4. Delete old items
+            await client.query('DELETE FROM sales_order_items WHERE sales_order_id = $1', [id]);
+
+            // 5. Create new Sales Order Items and Reduce Inventory
+            for (const item of processedItems) {
+                await client.query(
+                    `INSERT INTO sales_order_items 
+                     (sales_order_id, product_id, quantity, unit_price, subtotal) 
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [id, item.product_id, item.quantity, item.unit_price, item.subtotal]
+                );
+
+                // Reduce inventory correctly based on the new sold quantity
+                await client.query(
+                    `UPDATE inventory SET quantity = quantity - $1 WHERE product_id = $2 AND branch_id = $3`,
+                    [item.quantity, item.product_id, branch_id]
+                );
+            }
+
+            // (Optional) Ledger adjustment logic goes here, if we want to reverse old txn and insert new
+
+            await client.query('COMMIT');
+
+            res.json({
+                success: true,
+                message: 'Sales order updated successfully',
+                data: orderRes.rows[0]
+            });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            next(error);
+        } finally {
+            client.release();
+        }
+    }
 }
 
 module.exports = SalesOrderController;

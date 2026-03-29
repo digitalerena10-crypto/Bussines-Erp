@@ -10,7 +10,16 @@ const SalesChart = () => {
         queryFn: async () => {
             try {
                 const res = await api.get('/reports/sales-summary');
-                if (res.data.data.length > 0) return res.data.data;
+                if (res.data.data.length > 0) {
+                    return res.data.data.map(item => {
+                        const date = new Date(item.month || item.date);
+                        return {
+                            name: date.toLocaleString('default', { month: 'short' }) || 'Month',
+                            sales: Number(item.revenue) || 0,
+                            target: Number(item.revenue) * 0.8 || 0 // fake target for visuals
+                        };
+                    });
+                }
                 return getDefaultData();
             } catch (err) {
                 return getDefaultData();
@@ -19,15 +28,7 @@ const SalesChart = () => {
         refetchInterval: 60000,
     });
 
-    const getDefaultData = () => [
-        { name: 'Jan', sales: 4000, target: 2400 },
-        { name: 'Feb', sales: 3000, target: 1398 },
-        { name: 'Mar', sales: 9800, target: 9800 },
-        { name: 'Apr', sales: 3908, target: 3908 },
-        { name: 'May', sales: 4800, target: 4800 },
-        { name: 'Jun', sales: 3800, target: 3800 },
-        { name: 'Jul', sales: 4300, target: 4300 },
-    ];
+    const getDefaultData = () => [];
 
     if (isLoading) return <div className="h-full w-full flex items-center justify-center text-gray-400">Loading Chart...</div>;
 

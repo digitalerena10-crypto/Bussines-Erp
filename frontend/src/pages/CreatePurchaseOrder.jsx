@@ -108,15 +108,15 @@ const CreatePurchaseOrder = () => {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fadeIn">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-white rounded-lg transition-colors text-gray-500">
-                    <ArrowLeft size={20} />
+                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
+                    <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Create Purchase Order</h1>
-                    <p className="text-sm text-gray-500 mt-1">Draft a new PO to order stock from a supplier.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Create Purchase Order</h1>
+                    <p className="text-sm md:text-base text-gray-500 font-medium mt-1">Draft a new PO to order stock from a supplier.</p>
                 </div>
             </div>
 

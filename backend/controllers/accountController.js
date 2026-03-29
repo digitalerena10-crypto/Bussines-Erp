@@ -103,16 +103,35 @@ class AccountController {
                     [entryId, line.account_id, parseFloat(line.debit) || 0, parseFloat(line.credit) || 0, line.description || null]
                 );
 
-                // For the mock, also insert into transactions log so it appears in standard ledger views
-                const amount = (parseFloat(line.debit) || 0) > 0 ? parseFloat(line.debit) : parseFloat(line.credit);
-                const debitAccount = (parseFloat(line.debit) || 0) > 0 ? line.account_name : null;
-                const creditAccount = (parseFloat(line.credit) || 0) > 0 ? line.account_name : null;
+                // Update Account Balance
+                const debit = parseFloat(line.debit) || 0;
+                const credit = parseFloat(line.credit) || 0;
+                if (debit > 0 || credit > 0) {
+                    // Fetch account type to know how to increase/decrease
+                    const accRes = await client.query('SELECT type FROM accounts WHERE id = $1', [line.account_id]);
+                    if (accRes.rows.length > 0) {
+                        const type = accRes.rows[0].type;
+                        let adjustment = 0;
+                        if (['Asset', 'Expense'].includes(type)) {
+                            adjustment = debit - credit;
+                        } else {
+                            adjustment = credit - debit;
+                        }
 
+                        await client.query(
+                            'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
+                            [adjustment, line.account_id]
+                        );
+                    }
+                }
+
+                // Insert into transactions log for standard ledger views
+                const amount = (parseFloat(line.debit) || 0) > 0 ? parseFloat(line.debit) : parseFloat(line.credit);
                 if (amount > 0) {
                     await client.query(
-                        `INSERT INTO transactions (transaction_date, description, amount, debit_account_name, credit_account_name, type) 
-                         VALUES ($1, $2, $3, $4, $5, 'journal')`,
-                        [date, line.description || description, amount, debitAccount || 'Split', creditAccount || 'Split']
+                        `INSERT INTO transactions (transaction_date, description, amount, debit_account_id, credit_account_id, reference_type, reference_id, type) 
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, 'journal')`,
+                        [date, line.description || description, amount, (parseFloat(line.debit) || 0) > 0 ? line.account_id : null, (parseFloat(line.credit) || 0) > 0 ? line.account_id : null, 'journal_entry', entryId]
                     );
                 }
             }

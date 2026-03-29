@@ -5,6 +5,24 @@ const { handleMockQuery } = require('../utils/mockDb');
 
 const isMock = env.db.host === 'mock';
 
+const poolConfig = env.db.connectionString 
+    ? { connectionString: env.db.connectionString }
+    : {
+        host: env.db.host,
+        port: env.db.port,
+        database: env.db.name,
+        user: env.db.user,
+        password: env.db.password,
+    };
+
+if (env.nodeEnv === 'production') {
+    poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+poolConfig.max = 20;
+poolConfig.idleTimeoutMillis = 30000;
+poolConfig.connectionTimeoutMillis = 5000;
+
 const pool = isMock ? {
     on: () => { },
     connect: async () => ({
@@ -12,16 +30,7 @@ const pool = isMock ? {
         release: () => { },
     }),
     query: (text, params) => handleMockQuery(text, params),
-} : new Pool({
-    host: env.db.host,
-    port: env.db.port,
-    database: env.db.name,
-    user: env.db.user,
-    password: env.db.password,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
-});
+} : new Pool(poolConfig);
 
 // Log pool events
 if (!isMock) {

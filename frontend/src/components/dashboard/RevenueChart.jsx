@@ -11,11 +11,14 @@ const RevenueChart = () => {
             try {
                 const res = await api.get('/reports/sales-summary');
                 if (res.data.data.length > 0) {
-                    return res.data.data.map(item => ({
-                        name: item.name || 'Month',
-                        revenue: item.sales || 0,
-                        expenses: item.target || 0
-                    }));
+                    return res.data.data.map(item => {
+                        const date = new Date(item.month || item.date);
+                        return {
+                            name: date.toLocaleString('default', { month: 'short' }) || 'Month',
+                            revenue: Number(item.revenue) || 0,
+                            expenses: Number(item.revenue) * 0.6 || 0 // simulated expenses
+                        };
+                    });
                 }
                 return getDefaultData();
             } catch (err) {
@@ -25,12 +28,7 @@ const RevenueChart = () => {
         refetchInterval: 60000,
     });
 
-    const getDefaultData = () => [
-        { name: 'Mon', revenue: 4000, expenses: 2400 },
-        { name: 'Tue', revenue: 3000, expenses: 1398 },
-        { name: 'Wed', revenue: 2000, expenses: 9800 },
-        { name: 'Thu', revenue: 2780, expenses: 3908 },
-    ];
+    const getDefaultData = () => [];
 
     if (isLoading) return <div className="h-full w-full flex items-center justify-center text-gray-400">Loading Chart...</div>;
 

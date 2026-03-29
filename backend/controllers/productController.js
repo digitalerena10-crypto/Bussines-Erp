@@ -89,6 +89,7 @@ class ProductController {
                 is_active = true, image_url,
                 unit_of_measure, min_stock_level, stock_quantity = 0
             } = req.body;
+            const initialStockQty = Number(stock_quantity) || 0;
 
             const required = validateRequired(req.body, ['name', 'base_price']);
             if (!required.valid) {
@@ -113,13 +114,19 @@ class ProductController {
             );
 
             const productId = result.rows[0].id;
-            const branchId = req.user.branch_id || '1'; // Default branch
+            let branchId = req.user?.branchId || req.user?.branch_id || null;
+            if (!branchId) {
+                const branchResult = await client.query(
+                    'SELECT id FROM branches ORDER BY created_at ASC LIMIT 1'
+                );
+                branchId = branchResult.rows[0]?.id || null;
+            }
 
-            // Insert initial stock if provided
-            if (stock_quantity > 0) {
+            // Insert initial stock only when both quantity and branch are available
+            if (initialStockQty > 0 && branchId) {
                 await client.query(
                     `INSERT INTO inventory (product_id, branch_id, quantity) VALUES ($1, $2, $3) RETURNING *`,
-                    [productId, branchId, stock_quantity]
+                    [productId, branchId, initialStockQty]
                 );
             }
 
@@ -139,6 +146,130 @@ class ProductController {
             }
         } finally {
             client.release();
+        }
+    }
+
+    /**
+     * PUT /api/products/:id
+     * Update an existing product
+     */
+    static async updateProduct(req, res, next) {
+        try {
+            const { id } = req.params;
+            const {
+                sku, name, description, category_id, supplier_id,
+                base_price, cost_price, tax_rate, brand, barcode,
+                is_active = true, image_url, unit_of_measure, min_stock_level,
+                stock_quantity
+            } = req.body;
+            const updatedStockQty = stock_quantity !== undefined ? Number(stock_quantity) : null;
+
+            const required = validateRequired(req.body, ['name', 'base_price']);
+            if (!required.valid) {
+                throw ApiError.badRequest(`Missing required fields: ${required.missing.join(', ')}`);
+            }
+
+            const existing = await pool.query('SELECT id FROM products WHERE id = $1', [id]);
+            if (existing.rows.length === 0) {
+                throw ApiError.notFound('Product not found');
+            }
+
+            const result = await pool.query(
+                `UPDATE products
+         SET sku = $1,
+             name = $2,
+             description = $3,
+             category_id = $4,
+             supplier_id = $5,
+             base_price = $6,
+             cost_price = $7,
+             tax_rate = $8,
+             brand = $9,
+             barcode = $10,
+             is_active = $11,
+             image_url = $12,
+             unit_of_measure = $13,
+             min_stock_level = $14
+         WHERE id = $15
+         RETURNING *`,
+                [
+                    sku,
+                    name,
+                    description || null,
+                    category_id || null,
+                    supplier_id || null,
+                    base_price,
+                    cost_price || 0,
+                    tax_rate || 0,
+                    brand || null,
+                    barcode || null,
+                    is_active,
+                    image_url || null,
+                    unit_of_measure || 'pcs',
+                    min_stock_level || 0,
+                    id
+                ]
+            );
+            
+            // Handle stock update if quantity is provided
+            if (updatedStockQty !== null) {
+                let branchId = req.user?.branchId || req.user?.branch_id || null;
+                if (!branchId) {
+                    const branchRes = await pool.query('SELECT id FROM branches ORDER BY created_at ASC LIMIT 1');
+                    branchId = branchRes.rows[0]?.id || '1';
+                }
+
+                await pool.query(`
+                    INSERT INTO inventory (product_id, branch_id, quantity)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (product_id, branch_id)
+                    DO UPDATE SET 
+                        quantity = $3,
+                        last_updated = CURRENT_TIMESTAMP
+                `, [id, branchId, updatedStockQty]);
+            }
+
+            res.json({
+                success: true,
+                message: 'Product updated successfully',
+                data: result.rows[0]
+            });
+        } catch (error) {
+            if (error.code === '23505') {
+                next(ApiError.conflict('Product with this SKU already exists'));
+            } else {
+                next(error);
+            }
+        }
+    }
+
+    /**
+     * DELETE /api/products/:id
+     * Soft-delete a product
+     */
+    static async deleteProduct(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const result = await pool.query(
+                `UPDATE products
+         SET is_active = false
+         WHERE id = $1
+         RETURNING id, name`,
+                [id]
+            );
+
+            if (result.rows.length === 0) {
+                throw ApiError.notFound('Product not found');
+            }
+
+            res.json({
+                success: true,
+                message: 'Product deleted successfully',
+                data: result.rows[0]
+            });
+        } catch (error) {
+            next(error);
         }
     }
 }
