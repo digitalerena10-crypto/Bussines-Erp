@@ -20,15 +20,28 @@ app.use(helmet({
     crossOriginResourcePolicy: false
 }));
 
-// ─── CORS ───────────────────────────────────────────────────────────
+// ─── TEMP DEBUG CORS (Uncomment to bypass all CORS rules for testing)
+// app.use(cors());
+
+// ─── STRICT PRODUCTION CORS ─────────────────────────────────────────
 app.use(
     cors({
-        origin: env.corsOrigin,
+        // 1. Allow ONLY this exact Vercel frontend URL
+        origin: 'https://bussines-erp-s6ea.vercel.app', 
+        
+        // 2. Enable credentials (cookies, authorization headers, etc.)
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
+        
+        // 3. Enable exactly these methods
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        
+        // 4. Allowed headers (standard API headers)
+        allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept']
     })
 );
+
+// Properly handle preflight OPTIONS requests for all routes natively
+app.options('*', cors());
 
 // ─── Body Parsing ───────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
@@ -116,9 +129,12 @@ const startServer = async () => {
     // Seed admin user (non-blocking, won't crash server)
     seedAdmin().catch(() => {});
 
-    app.listen(env.port, '0.0.0.0', () => {
-        logger.info(`🚀 ERP Server running on port ${env.port} in ${env.nodeEnv} mode`);
-        logger.info(`📡 API available at http://0.0.0.0:${env.port}/api`);
+    // Ensure we are explicitly using process.env.PORT as requested
+    const PORT = process.env.PORT || env.port || 5000;
+
+    app.listen(PORT, '0.0.0.0', () => {
+        logger.info(`🚀 ERP Server running on port ${PORT} in ${env.nodeEnv || 'development'} mode`);
+        logger.info(`📡 API available at http://0.0.0.0:${PORT}/api`);
     });
 };
 
