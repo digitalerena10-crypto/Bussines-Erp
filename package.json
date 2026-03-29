@@ -1,6 +1,9 @@
 {
   "name": "software",
   "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "description": "A modern, scalable, and enterprise-grade ERP software suite.",
   "scripts": {
     "dev:backend": "npm run dev --prefix backend",

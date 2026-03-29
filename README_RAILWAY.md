@@ -1,34 +1,37 @@
-# 🚀 Kinetic Vault ERP - Deployment Survival Guide
+# 🚀 Railway Backend Deployment Guide (UPDATED)
 
-This document explains exactly how to fix the "Start and Crash" issue on Railway.
+This repository has a completely clean, standard two-folder architecture. You no longer need complicated root-level scripts to make Railway work!
 
-## 🛠 The Fix: Root Configuration
-Your backend code is in the `/backend` subfolder. For Railway to find it, we added two files to your **ROOT** folder:
-1.  **`railway.json`**: Tells Railway to use the Nixpacks builder and skip the Railpack error.
-2.  **`package.json`**: Added a `start` script: `npm run migrate --prefix backend && npm start --prefix backend`.
+## ☁️ Step-by-Step Backend Deployment
 
-## 🔑 Required Railway Variables (MUST ADD)
-Go to your **Backend Service** -> **Variables** and add these EXACT names:
+1. **Push your code to GitHub.** Ensure the `backend/` and `frontend/` folders are pushed successfully.
+2. **Go to [Railway.app](https://railway.app)** -> New Project -> **Deploy from GitHub repo**.
+3. **Select your repository.**
+4. **⚠️ CRITICAL - Update Root Directory:** 
+   Railway usually looks at the root of a repository. Since your backend is cleanly stored in its own folder, you must tell Railway where it is:
+   - Go to your Railway service's **Settings** tab.
+   - Scroll down to **Root Directory**.
+   - Type `/backend` and save.
+   *(This tells Railway to use the `backend/package.json` and `backend/railway.json` automatically!)*
+5. **Add a Postgres Database:** Click **New** -> **Database** -> **Add PostgreSQL**. Railway will automatically insert a `DATABASE_URL` variable for you.
+
+## 🔑 Required Backend Variables (MUST ADD)
+Go to your **Backend Service** -> **Variables** tab and add these exactly:
 
 | NAME | VALUE |
 | :--- | :--- |
-| `DATABASE_URL` | Check the Postgres service and link it here. |
-| `JWT_SECRET` | `s3cr3t_v4ult_k3y_for_3rp_2026` (Or any secret string) |
-| `JWT_REFRESH_SECRET` | `r3fr3sh_v4ult_k3y_for_3rp_2026` |
-| `CORS_ORIGIN` | `https://bussines-erp.vercel.app` (Your Vercel URL, **no trailing slash**) |
-| `NODE_ENV` | `production` |
+| `JWT_SECRET` | `your_secure_secret_string_here` |
+| `JWT_REFRESH_SECRET` | `your_refresh_secret_string_here` |
+| `CORS_ORIGIN` | Wait to add this! First follow the Vercel steps in `README.md` to get your Vercel URL, then paste it here (e.g., `https://my-erp.vercel.app`). **NO TRAILING SLASH!** |
+| `CLOUDINARY_CLOUD_NAME`| Your Cloudinary Cloud Name (Highly Recommended for permanent uploads) |
+| `CLOUDINARY_API_KEY` | Your Cloudinary API Key |
+| `CLOUDINARY_API_SECRET`| Your Cloudinary API Secret |
 
-## 🚑 Troubleshooting "Crash on Start"
-If you see `❌ Missing Required Keys`, it means you forgot to add one of the variables above.
+> NOTE: Do not manually set `PORT`. Railway manages ports dynamically!
 
-If you see `❌ Migration failed`, check that your **PostgreSQL** service is "Active" (Green) in the Railway dashboard.
+## 📡 Get Your Live API URL
+1. Go to your backend's **Settings** tab.
+2. Under **Domains**, click **Generate Domain**.
+3. Copy this URL! You will use this exact URL as the `VITE_API_URL` variable inside Vercel for your frontend deployment.
 
----
-
-### 🌊 Force Sync Code to Railway
-Run this one command in your terminal to ensure everything is clean:
-```bash
-git add .
-git commit -m "fix: clean repo and production config v4"
-git push origin main --force
-```
+*(For full Vercel Frontend deployment steps, see the main `README.md` file located at the root of the project!)*

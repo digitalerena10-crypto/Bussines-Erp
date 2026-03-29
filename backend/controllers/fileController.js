@@ -16,7 +16,12 @@ class FileController {
                 throw ApiError.badRequest('No file uploaded');
             }
 
-            console.log(`[Storage] File uploaded: ${req.file.filename} (${req.file.size} bytes)`);
+            console.log(`[Storage] File uploaded: ${req.file.originalname} (${req.file.size} bytes)`);
+
+            // If Cloudinary is used, it sets req.file.path as the CDN URL
+            // If local storage is used, it sets req.file.filename and we prefix with /uploads/
+            const isCloudinary = req.file.path && req.file.path.startsWith('http');
+            const fileUrl = isCloudinary ? req.file.path : `/uploads/${req.file.filename}`;
 
             const newFile = {
                 id: Date.now().toString(),
@@ -24,7 +29,7 @@ class FileController {
                 type: req.file.mimetype,
                 size: req.file.size,
                 uploadedAt: new Date().toISOString(),
-                url: `/uploads/${req.file.filename}`
+                url: fileUrl
             };
 
             uploadedFiles.unshift(newFile);

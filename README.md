@@ -55,7 +55,7 @@ A modern, scalable, and enterprise-grade **Enterprise Resource Planning (ERP)** 
 
 ### Backend (API Services)
 - **Runtime:** Node.js + Express.js
-- **Database Architecture:** PostgreSQL (Currently running in an in-memory `mockDb.js` engine for zero-setup local development)
+- **Database Architecture:** PostgreSQL
 - **Security:** Helmet, CORS, Express Rate Limit, bcryptjs, xss-clean, hpp
 - **Process Management:** PM2 (Persistent Background Execution)
 
@@ -127,47 +127,53 @@ Access the application in your browser and log in with:
 As of the latest build, the application has undergone a **Zero-Error Polish**. 
 This guarantees:
 1. **Silent Browser Consoles:** Complete resolution of all React Router deprecation warnings and missing image DOM errors.
-2. **Hardened RBAC Engine:** The mocked database has been perfected to ensure `req.user` JWT payloads correctly authorize Super Admins for restricted `/api/admin/*` endpoints without throwing `403 Forbidden` errors.
+2. **Hardened RBAC Engine:** The database has been perfected to ensure `req.user` JWT payloads correctly authorize Super Admins for restricted `/api/admin/*` endpoints without throwing `403 Forbidden` errors.
 
 ---
 
-## 🚀 Production Deployment Guide
+## 🚀 A-to-Z Production Deployment Guide
 
-We've optimized this project to be deployed seamlessly using **Railway** (for the Backend API and Database) and **Vercel** (for the Frontend UI). 
+This project is structured as a monorepo containing perfectly split `frontend/` and `backend/` directories. We use **Railway** for the Node.js API and **Vercel** for the React application.
 
-### 1. Backend & Database (Railway)
-*Deploying the backend first allows us to grab the live API URL needed for the frontend.*
+### ☁️ Step 1: Deploy Backend to Railway
 
-1. **Sign Up & Create Project:** Go to [Railway.app](https://railway.app/), create an account, and start a new project by selecting **Deploy from GitHub repo**.
-2. **Select Repo & Directory:** Choose your ERP repository. When prompted for the Root Directory, type `/backend`.
-3. **Provision Database:** In your new Railway project, click **New** -> **Database** -> **Add PostgreSQL**. This attaches a clean Postgres database to your environment.
-4. **Environment Variables:** Navigate to your backend service's **Variables** tab and add the following:
-   - `DATABASE_URL`: Add a reference to your new PostgreSQL database (Railway usually provides a button to automatically insert this).
-   - `JWT_SECRET`: A long, secure random string (e.g., `super_secret_erp_key_2024`).
+*Deploy the backend first to get the live API URL for your frontend.*
+
+1. **Sign Up & Create Project:** Go to [Railway.app](https://railway.app/). Create a New Project -> **Deploy from GitHub repo**.
+2. **Select Repository:** Choose your ERP repository.
+3. **Configure Root Directory:** By default, Railway looks in the root folder. Go to your service's **Settings**, find **Root Directory**, and type `/backend`. This tells Railway to build the Node API from our clean folder.
+4. **Provision Database (Optional if using Cloud):** Click **New** -> **Database** -> **Add PostgreSQL** if you want Railway to host your database.
+5. **Set Environment Variables:** Go to the backend service's **Variables** tab and add exactly these keys:
+   - `DATABASE_URL`: Add your Postgres connection string (Railway usually auto-links this).
+   - `JWT_SECRET`: A secure random string (e.g., `super_secret_erp_key_2024`).
    - `JWT_REFRESH_SECRET`: Another secure random string.
-   - `CORS_ORIGIN`: Leave this blank for now. We will update it in Step 3!
-   > *Note: Do NOT set a `PORT` variable. Railway manages ports automatically.*
-5. **Get Your URL:** Go to the backend service's **Settings** tab -> **Domains** -> click **Generate Domain**. Save this URL (e.g., `https://my-erp-backend.up.railway.app`).
+   - `CORS_ORIGIN`: Leave this blank for now (We will add the Vercel URL here in Step 3!).
+   - **Cloudinary Image Storage (Recommended):** Railway's local disk wipes randomly. To make uploads permanent, set these:
+     - `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name.
+     - `CLOUDINARY_API_KEY`: Your Cloudinary API Key.
+     - `CLOUDINARY_API_SECRET`: Your Cloudinary API Secret.
+6. **Generate Domain:** Go to the backend **Settings** tab -> **Domains** -> click **Generate Domain**. Save this URL (e.g., `https://my-erp-backend.up.railway.app`).
 
-### 2. Frontend (Vercel)
-1. **Sign Up & Import:** Go to [Vercel.com](https://vercel.com/), click **Add New Project**, and import your GitHub repository.
-2. **Configure Root Directory:** Click **Edit** on the Root Directory option and select the `frontend/` folder. Vercel will automatically detect the Vite framework.
-3. **Environment Variables:** Expand the variables section and add:
+### 🌍 Step 2: Deploy Frontend to Vercel
+
+1. **Sign Up & Create Project:** Go to [Vercel.com](https://vercel.com/) -> **Add New** -> **Project**. Import your GitHub repository.
+2. **Configure Framework & Root Directory:** 
+   - Framework Preset: **Vite**
+   - Root Directory: Click **Edit** and select the `frontend` directory.
+3. **Set Environment Variables:** Expand the variables section BEFORE you click deploy, and add:
    - Name: `VITE_API_URL`
-   - Value: `https://your-railway-url.railway.app/api` *(Paste the exact domain you generated in Railway, and append `/api` to it)*
+   - Value: `https://your-railway-url.railway.app/api` *(Paste your Railway domain and append `/api` to it!)*
+   - Name: `VITE_RESOURCES_URL`
+   - Value: `https://your-railway-url.railway.app` *(Just the Railway domain!)*
 4. **Deploy:** Click **Deploy**. Vercel will build the React app and give you a live frontend URL (e.g., `https://my-erp-frontend.vercel.app`).
 
-### 3. Final Hookup (Connecting the Two)
-1. Return to your **Railway** project dashboard and open the Backend service.
-2. Go to the **Variables** tab.
-3. Add or update the `CORS_ORIGIN` variable to exactly match your new Vercel URL:
-   - `CORS_ORIGIN`: `https://my-erp-frontend.vercel.app` *(Ensure there is no trailing slash)*
-4. Railway will automatically redeploy the backend with the new security rules. Your frontend and backend are now securely connected!
+### 🔗 Step 3: Final Hookup (Connecting the Two)
 
----
+1. Return to your **Railway** project dashboard and open your Backend service.
+2. Go back to the **Variables** tab.
+3. Add the Vercel URL you just created into the CORS configuration so the backend accepts its requests:
+   - Name: `CORS_ORIGIN`
+   - Value: `https://my-erp-frontend.vercel.app` *(Crucial: Ensure there is NO trailing slash!)*
+4. Railway will automatically redeploy the backend with the new security rules.
 
-## 🛠️ Maintenance & Support
-- **Updates:** Any time you push code to the `main` branch on GitHub, Railway and Vercel will automatically rebuild and deploy your changes.
-- **Database Access:** You can view, edit, and query your live production data directly through the **Data** tab in your Railway PostgreSQL service.
-#   B u s s i n e s - E r p  
- 
+**🎉 Congratulations! Your ERP system is fully live, secure, and production-ready.**

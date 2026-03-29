@@ -8,6 +8,8 @@ if (isProd && !import.meta.env.VITE_API_URL) {
   console.error('VITE_API_URL is missing in production environment');
 }
 
+console.log('📡 API Base URL:', API_URL);
+
 const api = axios.create({
     baseURL: API_URL,
     timeout: 15000,
