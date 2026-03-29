@@ -3,8 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const ApiError = require('../utils/ApiError');
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../uploads');
+// Ensure upload directory exists (relative to backend folder)
+const uploadDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
