@@ -20,8 +20,21 @@ export const LicenseProvider = ({ children }) => {
     const [remainingMs, setRemainingMs] = useState(0);
     const [activating, setActivating] = useState(false);
 
+    // In production web deployment, auto-activate (license gate is for desktop distribution only)
+    const isProd = import.meta.env.PROD;
+    useEffect(() => {
+        if (isProd && !expiresAt) {
+            const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+            const autoExpiry = Date.now() + oneYearMs;
+            localStorage.setItem('license_expiry', String(autoExpiry));
+            localStorage.setItem('license_tier', 'Production');
+            setExpiresAt(autoExpiry);
+            setTier('Production');
+        }
+    }, [isProd, expiresAt]);
+
     // Compute whether the license is currently active
-    const isLicenseActive = expiresAt !== null && expiresAt > Date.now();
+    const isLicenseActive = isProd || (expiresAt !== null && expiresAt > Date.now());
 
     // Countdown timer — ticks every second
     useEffect(() => {
