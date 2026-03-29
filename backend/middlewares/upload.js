@@ -3,10 +3,19 @@ const path = require('path');
 const fs = require('fs');
 const ApiError = require('../utils/ApiError');
 
-// Ensure upload directory exists (relative to backend folder)
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+// Ensure upload directory exists
+// Railway has a read-only filesystem — only /tmp is writable
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadDir = isProduction
+    ? path.join('/tmp', 'uploads')
+    : path.join(__dirname, '..', 'uploads');
+
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
+} catch (err) {
+    console.warn(`Upload dir creation skipped: ${err.message}`);
 }
 
 // Storage configuration
