@@ -9,14 +9,16 @@ const seedAdminUser = async () => {
         // Find Super Admin role
         const roleResult = await pool.query("SELECT id FROM roles WHERE name = 'Super Admin'");
         if (roleResult.rows.length === 0) {
-            throw new Error('Super Admin role not found. Please run migrations first.');
+            logger.warn('Super Admin role not found. Skipping seed — run migrations first.');
+            return;
         }
         const roleId = roleResult.rows[0].id;
 
         // Find HQ branch
         const branchResult = await pool.query("SELECT id FROM branches LIMIT 1");
         if (branchResult.rows.length === 0) {
-            throw new Error('No branch found. Please run migrations first.');
+            logger.warn('No branch found. Skipping seed — run migrations first.');
+            return;
         }
         const branchId = branchResult.rows[0].id;
 
@@ -41,12 +43,12 @@ const seedAdminUser = async () => {
         logger.info('🎉 Default admin user created successfully!');
         logger.info('Email: admin@company.com');
         logger.info('Password: password123');
-        logger.info('⚠️ Please change the password upon first login.');
 
     } catch (error) {
         logger.error(`❌ Failed to seed admin user: ${error.message}`);
     } finally {
-        pool.end();
+        await pool.end();
+        process.exit(0);
     }
 };
 

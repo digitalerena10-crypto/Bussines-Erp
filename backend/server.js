@@ -52,6 +52,16 @@ app.use((req, res, next) => {
     next();
 });
 
+// ─── Health Check (Railway + Browser verification) ──────────────
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'Kinetic Vault ERP Backend',
+        version: '1.0.0',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // ─── API Routes ─────────────────────────────────────────────────────
 app.use('/api', routes);
 
