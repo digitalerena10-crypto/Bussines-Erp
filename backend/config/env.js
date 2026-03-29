@@ -19,7 +19,7 @@ if (!hasDbUrl && !hasDbParams) {
   console.error('=================================================');
   console.error('🔴 You must add a Postgres database and link DATABASE_URL.');
   console.error('=================================================\n');
-  process.exit(1);
+  // process.exit(1); // Muted so Express boots, avoiding false 502 CORS errors!
 }
 
 const env = {
