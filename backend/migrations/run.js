@@ -7,9 +7,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const runMigrations = async () => {
     logger.info('🚀 Starting database migrations...');
 
-    const client = await pool.connect();
-
+    let client;
     try {
+        client = await pool.connect();
         await client.query('BEGIN');
 
         // Read and execute 01_initial_schema.sql
@@ -30,13 +30,14 @@ const runMigrations = async () => {
         logger.info('🎉 All migrations completed successfully!');
 
     } catch (error) {
-        await client.query('ROLLBACK');
+        if (client) await client.query('ROLLBACK');
         logger.error(`❌ Migration failed: ${error.message}`);
         console.error(error);
     } finally {
-        client.release();
+        if (client) client.release();
         pool.end();
     }
+    
 };
 
 runMigrations();
