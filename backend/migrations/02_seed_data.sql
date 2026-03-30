@@ -53,8 +53,9 @@ BEGIN
 END $$;
 
 -- Insert a default branch
-INSERT INTO branches (name, address, email) VALUES
-    ('Headquarters', '123 Business Avenue, Tech District', 'hq@company.com');
+INSERT INTO branches (name, address, email) 
+SELECT 'Headquarters', '123 Business Avenue, Tech District', 'hq@company.com'
+WHERE NOT EXISTS (SELECT 1 FROM branches WHERE name = 'Headquarters');
 
 -- Note: The default Super Admin user should be created programmatically 
 -- (via a setup script) so the password can be properly hashed with bcrypt.
