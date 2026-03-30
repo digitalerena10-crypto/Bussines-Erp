@@ -34,6 +34,11 @@ if (_realPool) {
 // ─── Safe query: tries real DB, falls back to mock ───────────────────
 const safeQuery = async (text, params) => {
     if (isMock) return handleMockQuery(text, params);
+    
+    if (env.nodeEnv === 'production') {
+        return await _realPool.query(text, params);
+    }
+
     try {
         return await _realPool.query(text, params);
     } catch (err) {
@@ -51,6 +56,9 @@ const createMockClient = () => ({
 // ─── Wrap a real PG client so its .query() also has mock fallback ─────
 const wrapClient = (realClient) => ({
     query: async (text, params) => {
+        if (env.nodeEnv === 'production') {
+            return await realClient.query(text, params);
+        }
         try {
             return await realClient.query(text, params);
         } catch (err) {
@@ -74,6 +82,7 @@ const pool = {
             const realClient = await _realPool.connect();
             return wrapClient(realClient);
         } catch (err) {
+            if (env.nodeEnv === 'production') throw err;
             logger.warn(`Pool connect failed → mock client`, { error: err.message });
             return createMockClient();
         }
