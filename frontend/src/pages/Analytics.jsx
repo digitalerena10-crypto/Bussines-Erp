@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users, Loader2, PieChart, Activity } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 
 const Analytics = () => {
+    const { currencySymbol } = useSettings();
     const { data: stats, isLoading: statsLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: () => api.get('/reports/dashboard-stats').then(res => res.data.data),
@@ -85,9 +87,9 @@ const Analytics = () => {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPICard icon={DollarSign} label="Total Revenue" value={`$${analytics.totalRevenue.toLocaleString()}`} change="+12.5%" trend="up" color="emerald" />
-                <KPICard icon={ShoppingCart} label="Total Cost" value={`$${analytics.totalCost.toLocaleString()}`} change="+8.2%" trend="up" color="blue" />
-                <KPICard icon={TrendingUp} label="Gross Profit" value={`$${analytics.grossProfit.toLocaleString()}`} change={`${analytics.profitMargin}%`} trend={analytics.grossProfit >= 0 ? "up" : "down"} color="violet" />
+                <KPICard icon={DollarSign} label="Total Revenue" value={`${currencySymbol}${analytics.totalRevenue.toLocaleString()}`} change="+12.5%" trend="up" color="emerald" />
+                <KPICard icon={ShoppingCart} label="Total Cost" value={`${currencySymbol}${analytics.totalCost.toLocaleString()}`} change="+8.2%" trend="up" color="blue" />
+                <KPICard icon={TrendingUp} label="Gross Profit" value={`${currencySymbol}${analytics.grossProfit.toLocaleString()}`} change={`${analytics.profitMargin}%`} trend={analytics.grossProfit >= 0 ? "up" : "down"} color="violet" />
                 <KPICard icon={Users} label="Total Customers" value={customers.length.toString()} change="+3" trend="up" color="amber" />
             </div>
 
@@ -112,12 +114,12 @@ const Analytics = () => {
                                     <div
                                         className="flex-1 max-w-[20px] bg-gradient-to-t from-primary-600 to-primary-400 rounded-t-md transition-all duration-700 hover:opacity-80"
                                         style={{ height: `${(d.revenue / maxRevenue) * 100}%`, minHeight: '4px' }}
-                                        title={`Revenue: $${d.revenue.toLocaleString()}`}
+                                        title={`Revenue: ${currencySymbol}${d.revenue.toLocaleString()}`}
                                     />
                                     <div
                                         className="flex-1 max-w-[20px] bg-gradient-to-t from-orange-500 to-orange-300 rounded-t-md transition-all duration-700 hover:opacity-80"
                                         style={{ height: `${(d.cost / maxRevenue) * 100}%`, minHeight: '4px' }}
-                                        title={`Cost: $${d.cost.toLocaleString()}`}
+                                        title={`Cost: ${currencySymbol}${d.cost.toLocaleString()}`}
                                     />
                                 </div>
                                 <span className="text-[10px] font-bold text-gray-400 uppercase">{d.month}</span>
@@ -133,7 +135,7 @@ const Analytics = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-500">Revenue</span>
-                                <span className="font-bold text-emerald-600">${analytics.totalRevenue.toLocaleString()}</span>
+                                <span className="font-bold text-emerald-600">{currencySymbol}{analytics.totalRevenue.toLocaleString()}</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-2">
                                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: '100%' }} />
@@ -142,7 +144,7 @@ const Analytics = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-500">Cost of Goods</span>
-                                <span className="font-bold text-orange-600">${analytics.totalCost.toLocaleString()}</span>
+                                <span className="font-bold text-orange-600">{currencySymbol}{analytics.totalCost.toLocaleString()}</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-2">
                                 <div className="bg-orange-500 h-full rounded-full" style={{ width: analytics.totalRevenue > 0 ? `${(analytics.totalCost / analytics.totalRevenue) * 100}%` : '0%' }} />
@@ -152,7 +154,7 @@ const Analytics = () => {
                             <div className="flex justify-between items-center">
                                 <span className="text-sm font-bold text-gray-700">Gross Profit</span>
                                 <span className={`text-lg font-black ${analytics.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                    ${analytics.grossProfit.toLocaleString()}
+                                    {currencySymbol}{analytics.grossProfit.toLocaleString()}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center mt-2">
@@ -188,7 +190,7 @@ const Analytics = () => {
                                             <div className="bg-primary-500 h-full rounded-full transition-all" style={{ width: `${analytics.customerSpending[0]?.spent > 0 ? (c.spent / analytics.customerSpending[0].spent) * 100 : 0}%` }} />
                                         </div>
                                     </div>
-                                    <span className="font-bold text-sm text-gray-900">${c.spent.toLocaleString()}</span>
+                                    <span className="font-bold text-sm text-gray-900">{currencySymbol}{c.spent.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
@@ -234,7 +236,7 @@ const Analytics = () => {
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Order Value</p>
                         <p className="text-2xl font-black mt-1">
-                            ${salesOrders.length > 0 ? Math.round(analytics.totalRevenue / salesOrders.length).toLocaleString() : '0'}
+                            {currencySymbol}{salesOrders.length > 0 ? Math.round(analytics.totalRevenue / salesOrders.length).toLocaleString() : '0'}
                         </p>
                     </div>
                     <div>

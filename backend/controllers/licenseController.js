@@ -1,6 +1,6 @@
 /**
  * License / Activation Key Controller
- * Pre-generated keys with 4 tiers: 1 Day, 1 Month, 3 Months, 1 Year
+ * Pre-generated keys with 5 tiers: 10 Minutes, 1 Day, 15 Days, 1 Month, 3 Months, 1 Year
  * Each key is single-use.
  */
 
@@ -20,6 +20,13 @@ const LICENSE_KEYS = {
     'DAY-M3N4-O5P6-Q7R8': { tier: '1 Day', duration: MS_DAY, used: false },
     'DAY-S9T0-U1V2-W3X4': { tier: '1 Day', duration: MS_DAY, used: false },
     'DAY-Y5Z6-A7B8-C9D0': { tier: '1 Day', duration: MS_DAY, used: false },
+
+    // 15 Day keys
+    'HLF-A1B2-C3D4-E5F6': { tier: '15 Days', duration: MS_DAY * 15, used: false },
+    'HLF-G7H8-I9J0-K1L2': { tier: '15 Days', duration: MS_DAY * 15, used: false },
+    'HLF-M3N4-O5P6-Q7R8': { tier: '15 Days', duration: MS_DAY * 15, used: false },
+    'HLF-S9T0-U1V2-W3X4': { tier: '15 Days', duration: MS_DAY * 15, used: false },
+    'HLF-Y5Z6-A7B8-C9D0': { tier: '15 Days', duration: MS_DAY * 15, used: false },
 
     // 1 Month keys
     'MON-A1B2-C3D4-E5F6': { tier: '1 Month', duration: MS_DAY * 30, used: false },
@@ -87,6 +94,21 @@ class LicenseController {
     }
 
     /**
+     * POST /api/license/deactivate
+     * Clears the current license (client-side handles localStorage cleanup)
+     */
+    static async deactivate(req, res, next) {
+        try {
+            res.json({
+                success: true,
+                message: 'License deactivated successfully. The application will require a new activation key.',
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
      * GET /api/license/keys
      * Returns all keys and their status (admin tool)
      */
@@ -105,3 +127,4 @@ class LicenseController {
 }
 
 module.exports = LicenseController;
+

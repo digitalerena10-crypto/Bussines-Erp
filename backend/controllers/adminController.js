@@ -71,10 +71,40 @@ const getSystemHealth = async (req, res, next) => {
     }
 };
 
+const uploadLogo = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded.' });
+        }
+
+        // Build the URL based on storage type
+        let logoUrl;
+        if (req.file.path && req.file.path.startsWith('http')) {
+            // Cloudinary or external storage
+            logoUrl = req.file.path;
+        } else {
+            // Local storage — construct a relative URL
+            logoUrl = `/uploads/${req.file.filename}`;
+        }
+
+        // Update settings store
+        settingsStore.logo_url = logoUrl;
+
+        logger.info('Logo uploaded successfully', { logoUrl, user: req.user.id });
+        res.json({
+            success: true,
+            message: 'Logo uploaded successfully',
+            data: { logo_url: logoUrl }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getSettings,
     updateSettings,
+    uploadLogo,
     getAuditLogs,
     getSystemHealth
 };
-

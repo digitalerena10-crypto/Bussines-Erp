@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Trash2, Save, FileText, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 
 const CreateInvoice = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
 
     // Check if we passed a sales_order_id in state to auto-fill (optional)
     const initialSalesOrderId = location.state?.sales_order_id || '';
@@ -166,7 +168,7 @@ const CreateInvoice = () => {
                             <select value={salesOrderId} onChange={e => setSalesOrderId(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white">
                                 <option value="">-- None --</option>
                                 {salesOrders?.filter(so => so.customer_id === customerId || !customerId).map(so => (
-                                    <option key={so.id} value={so.id}>{so.order_number} (${Number(so.total_amount).toFixed(2)})</option>
+                                    <option key={so.id} value={so.id}>{so.order_number} ({currencySymbol}{Number(so.total_amount).toFixed(2)})</option>
                                 ))}
                             </select>
                         </div>
@@ -221,7 +223,7 @@ const CreateInvoice = () => {
                                     <div className="flex-1">
                                         <label className="md:hidden block text-xs font-medium text-gray-500 mb-1">Price</label>
                                         <div className="relative">
-                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                             <input type="number" step="0.01" value={item.unit_price} onChange={e => handleItemChange(item.id, 'unit_price', e.target.value)} className="w-full pl-6 pr-2 py-2 border border-gray-200 rounded-md text-sm" />
                                         </div>
                                     </div>
@@ -230,7 +232,7 @@ const CreateInvoice = () => {
                                 <div className="col-span-1 md:col-span-3 flex justify-between items-center md:justify-end gap-4 w-full md:w-auto">
                                     <div className="font-medium text-gray-900 text-right md:w-full">
                                         <label className="md:hidden block text-xs font-medium text-gray-500 mb-1 text-left">Line Total</label>
-                                        ${(item.quantity * item.unit_price).toFixed(2)}
+                                        {currencySymbol}{(item.quantity * item.unit_price).toFixed(2)}
                                     </div>
 
                                     <button type="button" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50 transition-colors absolute top-2 right-2 md:static mt-6 md:mt-0 bg-white md:bg-transparent rounded-full md:rounded-none shadow-sm md:shadow-none border border-gray-200 md:border-none">
@@ -248,13 +250,13 @@ const CreateInvoice = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between items-center text-sm font-medium text-gray-500 mb-2">
                                 <span>Subtotal</span>
-                                <span>${totals.subtotal.toFixed(2)}</span>
+                                <span>{currencySymbol}{totals.subtotal.toFixed(2)}</span>
                             </div>
 
                             <div className="flex items-center justify-between gap-4">
                                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Tax Amount (+)</label>
                                 <div className="relative w-32">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                     <input type="number" step="0.01" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 text-sm text-right font-medium" />
                                 </div>
                             </div>
@@ -262,7 +264,7 @@ const CreateInvoice = () => {
                             <div className="flex items-center justify-between gap-4">
                                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Shipping (+)</label>
                                 <div className="relative w-32">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                     <input type="number" step="0.01" value={shippingAmount} onChange={e => setShippingAmount(e.target.value)} className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 text-sm text-right font-medium" />
                                 </div>
                             </div>
@@ -270,14 +272,14 @@ const CreateInvoice = () => {
                             <div className="flex items-center justify-between gap-4 pb-3 border-b border-gray-100">
                                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Discount (-)</label>
                                 <div className="relative w-32">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                     <input type="number" step="0.01" value={discountAmount} onChange={e => setDiscountAmount(e.target.value)} className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 text-sm text-right font-medium text-red-600" />
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-center pt-1 text-lg font-bold text-gray-900">
                                 <span>Grand Total</span>
-                                <span>${totals.grandTotal.toFixed(2)}</span>
+                                <span>{currencySymbol}{totals.grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

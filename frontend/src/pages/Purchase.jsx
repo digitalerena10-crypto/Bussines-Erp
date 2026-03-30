@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Truck, ShoppingBag, Receipt, Loader2, AlertCircle, Plus, Search, FileText, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import { exportToCSV } from '@/utils/exportUtils';
 import Modal from '@/components/common/Modal';
 import ActionButtons from '@/components/common/ActionButtons';
@@ -13,6 +14,7 @@ const Purchase = () => {
     const [activeTab, setActiveTab] = useState('orders');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['purchase-data'],
@@ -161,7 +163,7 @@ const Purchase = () => {
                                                     {order.supplier_name}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
-                                                    ${parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4">
                                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border ${order.status === 'Completed' || order.status === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : order.status === 'Pending' || order.status === 'Ordered' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>

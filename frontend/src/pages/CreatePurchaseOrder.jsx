@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Trash2, Save, FileText, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 
 const CreatePurchaseOrder = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
 
     // Fetch master data needed for the form
     const { data: suppliers = [] } = useQuery({
@@ -183,14 +185,14 @@ const CreatePurchaseOrder = () => {
                                 <div className="col-span-1 md:col-span-2">
                                     <label className="md:hidden block text-xs font-medium text-gray-500 mb-1">Unit Cost</label>
                                     <div className="relative">
-                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                         <input type="number" step="0.01" value={item.unit_price} onChange={e => handleItemChange(item.id, 'unit_price', e.target.value)} className="w-full pl-6 pr-3 py-2 border border-gray-200 rounded-md text-sm" />
                                     </div>
                                 </div>
 
                                 <div className="col-span-1 text-right font-medium text-gray-900">
                                     <label className="md:hidden block text-xs font-medium text-gray-500 mb-1 text-left">Line Total</label>
-                                    ${(item.quantity * item.unit_price).toFixed(2)}
+                                    {currencySymbol}{(item.quantity * item.unit_price).toFixed(2)}
                                 </div>
 
                                 <div className="col-span-1 flex justify-end md:justify-center">
@@ -210,14 +212,14 @@ const CreatePurchaseOrder = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Tax / VAT Amount</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                     <input type="number" step="0.01" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Shipping / Handling Cost</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                                     <input type="number" step="0.01" value={shippingAmount} onChange={e => setShippingAmount(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 text-sm" />
                                 </div>
                             </div>
@@ -240,19 +242,19 @@ const CreatePurchaseOrder = () => {
                     <div className="w-full md:w-72 bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>Subtotal</span>
-                            <span>${totals.subtotal.toFixed(2)}</span>
+                            <span>{currencySymbol}{totals.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>Tax</span>
-                            <span>+${Number(taxAmount || 0).toFixed(2)}</span>
+                            <span>+{currencySymbol}{Number(taxAmount || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>Shipping</span>
-                            <span>+${Number(shippingAmount || 0).toFixed(2)}</span>
+                            <span>+{currencySymbol}{Number(shippingAmount || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
                             <span>Grand Total</span>
-                            <span>${totals.grandTotal.toFixed(2)}</span>
+                            <span>{currencySymbol}{totals.grandTotal.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>

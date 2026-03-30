@@ -98,6 +98,22 @@ export const LicenseProvider = ({ children }) => {
         }
     };
 
+    // Deactivate / delete the current license
+    const deactivateLicense = async () => {
+        try {
+            await api.post('/license/deactivate');
+        } catch (err) {
+            // Even if the server call fails, still clear local state
+            console.warn('Server deactivation call failed:', err.message);
+        }
+        // Clear local storage and state
+        localStorage.removeItem('license_expiry');
+        localStorage.removeItem('license_tier');
+        setExpiresAt(null);
+        setTier(null);
+        setRemainingMs(0);
+    };
+
     const value = {
         isLicenseActive,
         expiresAt,
@@ -105,6 +121,7 @@ export const LicenseProvider = ({ children }) => {
         remainingMs,
         remainingFormatted: formatRemaining(),
         activateLicense,
+        deactivateLicense,
         activating,
     };
 
@@ -116,3 +133,4 @@ export const LicenseProvider = ({ children }) => {
 };
 
 export default LicenseContext;
+

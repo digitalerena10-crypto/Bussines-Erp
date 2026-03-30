@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Calendar, CreditCard, Loader2, Plus, Search, CheckCircle, XCircle, Download, AlertCircle } from 'lucide-react';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import { exportToCSV } from '@/utils/exportUtils';
 import Modal from '@/components/common/Modal';
 import ActionButtons from '@/components/common/ActionButtons';
@@ -11,6 +12,7 @@ const HR = () => {
     const [activeTab, setActiveTab] = useState('employees');
     const [searchTerm, setSearchTerm] = useState('');
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
 
     const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState(null);
@@ -179,7 +181,7 @@ const HR = () => {
                                                     {emp.join_date ? new Date(emp.join_date).toLocaleDateString() : '-'}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
-                                                    ${parseFloat(emp.salary || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(emp.salary || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right">
                                                     <ActionButtons
@@ -259,7 +261,7 @@ const HR = () => {
                                                     #{pay.employee_id}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-emerald-600 bg-emerald-50/30">
-                                                    ${parseFloat(pay.net_salary || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(pay.net_salary || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4">
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-100">

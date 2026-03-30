@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, RefreshCw, Database, CheckCircle2, AlertTriangle, Loader2, Shield } from 'lucide-react';
+import { Save, RefreshCw, Database, CheckCircle2, AlertTriangle, Loader2, Shield, KeyRound, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
 import { Skeleton } from '@/components/common/SkeletonLoader';
+import { useLicense } from '@/context/LicenseContext';
 
 const SettingsTab = () => {
     const queryClient = useQueryClient();
+    const { tier, remainingFormatted, deactivateLicense, isLicenseActive } = useLicense();
+    
+    const fileInputRef = useRef(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    
     const [formData, setFormData] = useState({
         company_name: '',
         company_email: '',
@@ -38,6 +44,9 @@ const SettingsTab = () => {
                 currency: settings.currency || 'USD',
                 timezone: settings.timezone || 'UTC'
             });
+            if (settings.logo_url) {
+                setLogoPreview(settings.logo_url);
+            }
         }
     }, [settings]);
 
@@ -61,6 +70,31 @@ const SettingsTab = () => {
         }
     });
 
+    // Logo Upload Mutation
+    const logoMutation = useMutation({
+        mutationFn: async (file) => {
+            const formData = new FormData();
+            formData.append('logo', file);
+            const res = await api.post('/admin/upload-logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return res.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['settings']);
+            setSaveStatus({ type: 'success', message: 'Logo uploaded successfully!' });
+            setLogoPreview(data.data.logo_url);
+            setTimeout(() => setSaveStatus({ type: '', message: '' }), 5000);
+        },
+        onError: (error) => {
+            console.error('Logo upload failed:', error);
+            setSaveStatus({
+                type: 'error',
+                message: error.response?.data?.message || 'Failed to upload logo.'
+            });
+        }
+    });
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -70,6 +104,22 @@ const SettingsTab = () => {
         e.preventDefault();
         setSaveStatus({ type: '', message: '' });
         mutation.mutate(formData);
+    };
+
+    const handleLogoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSaveStatus({ type: '', message: '' });
+            logoMutation.mutate(file);
+        }
+    };
+
+    const handleDeactivate = () => {
+        if (window.confirm("Are you sure you want to delete the current activation key? The application will be locked immediately and require a new key.")) {
+            deactivateLicense();
+            // Optional: force reload or redirect to login (context handles navigation usually, or App will redirect)
+            window.location.reload(); 
+        }
     };
 
     if (isLoading) {
@@ -173,17 +223,78 @@ const SettingsTab = () => {
                         </button>
                     </div>
                 </form>
+
+                {/* License Management Section */}
+                <div className="card shadow-md border border-gray-100 p-6 md:p-8">
+                    <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3 pb-4 border-b border-gray-100">
+                        <KeyRound className="w-6 h-6 text-primary-600" />
+                        License Management
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                        <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Current Tier</p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg font-black text-gray-900">{tier || 'None'}</span>
+                                {isLicenseActive && <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700">Active</span>}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Time Remaining</p>
+                            <p className="text-lg font-black text-gray-900 font-mono">{remainingFormatted}</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-gray-100 flex justify-end">
+                        <button
+                            onClick={handleDeactivate}
+                            className="flex items-center gap-2 bg-white text-red-600 border border-red-200 px-6 py-2.5 rounded-xl font-bold hover:bg-red-50 transition-colors active:scale-95 w-full sm:w-auto justify-center"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete Activation Key
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="space-y-6">
-                <div className="card text-center py-10 shadow-sm border border-gray-100">
-                    <div className="w-24 h-24 md:w-32 md:h-32 bg-primary-50 rounded-full mx-auto flex items-center justify-center border-4 border-white shadow-xl shadow-primary-500/10 mb-6 group cursor-pointer hover:scale-105 transition-all duration-300">
-                        <RefreshCw className="w-8 h-8 md:w-10 md:h-10 text-primary-400 group-hover:rotate-180 transition-transform duration-700" />
+                <div className="card text-center py-10 shadow-sm border border-gray-100 relative overflow-hidden">
+                    {/* Add loading overlay for logo upload */}
+                    {logoMutation.isPending && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                        </div>
+                    )}
+
+                    <div className="w-24 h-24 md:w-32 md:h-32 bg-primary-50 rounded-full mx-auto flex items-center justify-center border-4 border-white shadow-xl shadow-primary-500/10 mb-6 group cursor-pointer hover:scale-105 transition-all duration-300 relative overflow-hidden"
+                         onClick={() => fileInputRef.current?.click()}>
+                        {logoPreview ? (
+                            <img src={logoPreview.startsWith('http') ? logoPreview : `${api.defaults.baseURL.replace('/api', '')}${logoPreview}`} alt="Company Logo" className="w-full h-full object-cover" />
+                        ) : (
+                            <RefreshCw className="w-8 h-8 md:w-10 md:h-10 text-primary-400 group-hover:rotate-180 transition-transform duration-700" />
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs uppercase tracking-wider">
+                            Change
+                        </div>
                     </div>
+                    
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleLogoUpload} 
+                        className="hidden" 
+                        accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+                    />
+
                     <h4 className="font-black text-lg text-gray-900">Company Logo</h4>
                     <p className="text-xs text-gray-400 font-bold uppercase mt-2 tracking-widest">Recommended: 512x512 PNG</p>
-                    <button className="mt-6 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto">
-                        Upload Image
+                    <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={logoMutation.isPending}
+                        className="mt-6 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-6 py-2.5 rounded-xl transition-colors w-full sm:w-auto"
+                    >
+                        {logoMutation.isPending ? 'Uploading...' : 'Upload Image'}
                     </button>
                 </div>
 

@@ -8,6 +8,7 @@ import {
     ArrowUpRight, Loader2, Search, XCircle
 } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 
 const COLORS = ['#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'];
 
@@ -16,6 +17,7 @@ const Reports = () => {
     const [inventoryData, setInventoryData] = useState([]);
     const [hrData, setHrData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { currencySymbol } = useSettings();
 
     // BI Enhancements: Filters & Drill-down
     const [selectedMonth, setSelectedMonth] = useState('');
@@ -100,9 +102,9 @@ const Reports = () => {
                     const profitMargin = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : '0.0';
 
                     const kpis = [
-                        { label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}`, target: 'All Time', progress: totalRevenue > 0 ? 100 : 0, color: 'text-blue-600', bg: 'bg-blue-50' },
-                        { label: 'Profit Margin', value: `${profitMargin}%`, target: `Revenue: $${totalRevenue.toLocaleString()}`, progress: Math.min(Number(profitMargin), 100), color: 'text-green-600', bg: 'bg-green-50' },
-                        { label: 'Monthly Payroll', value: `$${totalPayroll.toLocaleString()}`, target: `${totalEmployees} Staff`, progress: totalPayroll > 0 ? 75 : 0, color: 'text-purple-600', bg: 'bg-purple-50' },
+                        { label: 'Total Revenue', value: `${currencySymbol}${totalRevenue.toLocaleString()}`, target: 'All Time', progress: totalRevenue > 0 ? 100 : 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { label: 'Profit Margin', value: `${profitMargin}%`, target: `Revenue: ${currencySymbol}${totalRevenue.toLocaleString()}`, progress: Math.min(Number(profitMargin), 100), color: 'text-green-600', bg: 'bg-green-50' },
+                        { label: 'Monthly Payroll', value: `${currencySymbol}${totalPayroll.toLocaleString()}`, target: `${totalEmployees} Staff`, progress: totalPayroll > 0 ? 75 : 0, color: 'text-purple-600', bg: 'bg-purple-50' },
                         { label: 'Departments', value: `${hrData.length}`, target: `${totalEmployees} Employees`, progress: hrData.length > 0 ? 100 : 0, color: 'text-rose-600', bg: 'bg-rose-50' },
                     ];
 
@@ -176,7 +178,7 @@ const Reports = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value) => [`$${value.toLocaleString()}`, 'Value']}
+                                    formatter={(value) => [`${currencySymbol}${value.toLocaleString()}`, 'Value']}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
                             </PieChart>
@@ -189,7 +191,7 @@ const Reports = () => {
                                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                                     <span className="text-gray-600">{item.category}</span>
                                 </div>
-                                <span className="font-bold text-gray-900">${(item.total_value / 1000).toFixed(1)}k</span>
+                                <span className="font-bold text-gray-900">{currencySymbol}{(item.total_value / 1000).toFixed(1)}k</span>
                             </div>
                         ))}
                     </div>
@@ -212,7 +214,7 @@ const Reports = () => {
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">Total Impact</p>
                             <p className="text-2xl font-black text-gray-900">
-                                ${(drillDownData.revenue || drillDownData.total_value).toLocaleString()}
+                                {currencySymbol}{(drillDownData.revenue || drillDownData.total_value).toLocaleString()}
                             </p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg text-center">
@@ -254,7 +256,7 @@ const Reports = () => {
                                 <tr key={i} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">{dept.department}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{dept.count} Members</td>
-                                    <td className="px-6 py-4 text-sm font-bold text-gray-900">${parseInt(dept.total_salary).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-900">{currencySymbol}{parseInt(dept.total_salary).toLocaleString()}</td>
                                     <td className="px-6 py-4">
                                         <div className="w-full bg-gray-100 rounded-full h-1.5 max-w-[100px]">
                                             <div className="bg-primary-600 h-1.5 rounded-full" style={{ width: '75%' }}></div>

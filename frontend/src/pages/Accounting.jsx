@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calculator, BookOpen, Repeat, Loader2, AlertCircle, Plus, Search, FileBarChart, Download } from 'lucide-react';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import { exportToCSV } from '@/utils/exportUtils';
 import Modal from '@/components/common/Modal';
 import ActionButtons from '@/components/common/ActionButtons';
@@ -12,6 +13,7 @@ const Accounting = () => {
     const [activeTab, setActiveTab] = useState('coa');
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
+    const { currencySymbol } = useSettings();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['accounting-data'],
@@ -164,7 +166,7 @@ const Accounting = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
-                                                    ${parseFloat(account.current_balance || account.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(account.current_balance || account.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right">
                                                     <ActionButtons onDelete={() => deleteMutation.mutate({ endpoint: '/accounting/accounts', id: account.id })} />
@@ -208,10 +210,10 @@ const Accounting = () => {
                                                     {tx.reference_type} #{tx.reference_id}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right text-sm md:text-base font-black text-emerald-600 bg-emerald-50/30">
-                                                    {tx.entry_type === 'Debit' ? `$${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                                    {tx.entry_type === 'Debit' ? `${currencySymbol}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right text-sm md:text-base font-black text-red-600 bg-red-50/30">
-                                                    {tx.entry_type === 'Credit' ? `$${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                                    {tx.entry_type === 'Credit' ? `${currencySymbol}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-right">
                                                     <ActionButtons onDelete={() => deleteMutation.mutate({ endpoint: '/accounting/transactions', id: tx.id })} />

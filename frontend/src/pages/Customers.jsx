@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, FileText, Clock, DollarSign, Plus, Search, Download, Loader2, AlertCircle } from 'lucide-react';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import { exportToCSV } from '@/utils/exportUtils';
 import Modal from '@/components/common/Modal';
 import CustomerForm from '@/components/forms/CustomerForm';
@@ -12,6 +13,7 @@ import CustomerProfileDrawer from '@/components/customers/CustomerProfileDrawer'
 
 const Customers = () => {
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
@@ -95,7 +97,7 @@ const Customers = () => {
                         <div>
                             <p className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 md:mb-1.5">Gross Revenue</p>
                             <h3 className="text-xl md:text-3xl font-black text-gray-900 leading-none tracking-tight">
-                                ${salesOrders.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0).toLocaleString(undefined, { notation: "compact", compactDisplay: "short" })}
+                                {currencySymbol}{salesOrders.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0).toLocaleString(undefined, { notation: "compact", compactDisplay: "short" })}
                             </h3>
                         </div>
                         <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border border-violet-100 bg-violet-50 text-violet-600 flex items-center justify-center shadow-sm">

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShoppingCart, Users, Receipt, Loader2, AlertCircle, Plus, Search, FileText, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import { exportToCSV } from '@/utils/exportUtils';
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF';
 import Modal from '@/components/common/Modal';
@@ -13,6 +14,7 @@ const Sales = () => {
     const [activeTab, setActiveTab] = useState('orders');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { currencySymbol } = useSettings();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['sales-data'],
@@ -163,7 +165,7 @@ const Sales = () => {
                                                     {order.customer_name || 'Walk-in Client'}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
-                                                    ${parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4">
                                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border ${order.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : order.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
@@ -261,7 +263,7 @@ const Sales = () => {
                                                     {invoice.customer_name}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4 text-sm md:text-base font-black text-gray-900 bg-gray-50/50">
-                                                    ${parseFloat(invoice.grand_total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {currencySymbol}{parseFloat(invoice.grand_total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4">
                                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black uppercase tracking-widest border ${invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : invoice.status === 'Unpaid' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>

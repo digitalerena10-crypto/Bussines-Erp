@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LicenseProvider, useLicense } from './context/LicenseContext';
+import { SettingsProvider } from './context/SettingsContext';
 import MainLayout from './components/layout/MainLayout';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ActivationPage from './pages/ActivationPage';
@@ -46,6 +47,7 @@ function App() {
         <LicenseProvider>
             <LicenseGate>
                 <AuthProvider>
+                    <SettingsProvider>
                     <BrowserRouter future={{
                         v7_startTransition: true,
                         v7_relativeSplatPath: true,
@@ -87,6 +89,7 @@ function App() {
                             </Routes>
                         </ErrorBoundary>
                     </BrowserRouter>
+                    </SettingsProvider>
                 </AuthProvider>
             </LicenseGate>
         </LicenseProvider>

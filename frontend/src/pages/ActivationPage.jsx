@@ -59,6 +59,7 @@ const ActivationPage = () => {
                     <div className="flex gap-6 mt-12">
                         {[
                             { label: '1 Day', prefix: 'DAY-' },
+                            { label: '15 Days', prefix: 'HLF-' },
                             { label: '1 Month', prefix: 'MON-' },
                             { label: '3 Months', prefix: 'QTR-' },
                             { label: '1 Year', prefix: 'YER-' },

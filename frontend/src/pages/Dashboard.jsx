@@ -4,6 +4,7 @@ import {
     TrendingDown, AlertTriangle, Loader2
 } from 'lucide-react';
 import api from '@/services/api';
+import { useSettings } from '@/context/SettingsContext';
 import SalesChart from '@/components/dashboard/SalesChart';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import DigitalClock from '@/components/dashboard/DigitalClock';
@@ -11,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const Dashboard = () => {
     const { isAuthenticated } = useAuth();
+    const { currencySymbol } = useSettings();
 
     // Real-time data fetching
     const { data: stats, isLoading: statsLoading } = useQuery({
@@ -84,7 +86,7 @@ const Dashboard = () => {
                                     <div>
                                         <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">{card.title}</p>
                                         <h3 className="text-xl md:text-3xl font-black text-gray-900 mt-1 tabular-nums tracking-tight">
-                                            {card.isCurrency && (card.currencySymbol || '$')}
+                                            {card.isCurrency && currencySymbol}
                                             {card.value.toLocaleString(undefined, { notation: card.isCurrency ? "compact" : "standard", compactDisplay: "short" })}
                                         </h3>
                                     </div>
@@ -188,7 +190,7 @@ const Dashboard = () => {
                                                 {order.customer_name || 'Walk-in Client'}
                                             </td>
                                             <td className="px-4 md:px-6 py-3 md:py-4 text-sm font-black text-gray-900">
-                                                ${parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {currencySymbol}{parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="px-4 md:px-6 py-3 md:py-4">
                                                 <span className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase border tracking-wider ${statusColors[order.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
