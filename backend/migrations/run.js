@@ -5,20 +5,32 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const runMigrations = async () => {
     const dbUrl = process.env.DATABASE_URL;
+    const hasDbParams = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME;
 
-    if (!dbUrl) {
-        console.log('⚠️  No DATABASE_URL set — skipping migrations (dev/mock mode).');
+    if (!dbUrl && !hasDbParams) {
+        console.log('⚠️  No DATABASE_URL or DB_HOST set — skipping migrations (dev/mock mode).');
         process.exit(0);
     }
 
     console.log('🚀 Starting database migrations...');
-    console.log(`📡 Connecting to: ${dbUrl.replace(/:[^:@]+@/, ':***@')}`);
 
-    const pool = new Pool({
-        connectionString: dbUrl,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 10000,
-    });
+    const poolConfig = dbUrl
+        ? { connectionString: dbUrl }
+        : {
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT, 10) || 5432,
+            database: process.env.DB_NAME,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+        };
+
+    if (process.env.NODE_ENV === 'production') {
+        poolConfig.ssl = { rejectUnauthorized: false };
+    }
+
+    poolConfig.connectionTimeoutMillis = 10000;
+
+    const pool = new Pool(poolConfig);
 
     let client;
     try {
