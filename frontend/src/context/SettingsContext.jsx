@@ -41,6 +41,7 @@ export const SettingsProvider = ({ children }) => {
             const res = await api.get('/admin/settings');
             return res.data.data;
         },
+        enabled: !!localStorage.getItem('erp_token'),
         retry: 1,
         staleTime: 60000, // 1 minute — settings don't change often
         refetchOnWindowFocus: false,
