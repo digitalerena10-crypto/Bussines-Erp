@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm start --prefix backend",
+    "startCommand": "npm run migrate --prefix backend && npm start --prefix backend",
     "restartPolicyType": "ON_FAILURE"
   }
 }
