@@ -1,5 +1,15 @@
 const express = require('express');
 const router = express.Router();
+
+// Root API endpoint handler (prevent "Route /api not found")
+router.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Kinetic Vault ERP API is successfully handling requests',
+        timestamp: new Date().toISOString()
+    });
+});
+
 const licenseRoutes = require('./licenseRoutes');
 
 // License routes — no auth required, must be before audit logger
