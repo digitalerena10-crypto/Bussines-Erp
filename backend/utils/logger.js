@@ -1,5 +1,6 @@
 const winston = require('winston');
 const path = require('path');
+const fs = require('fs');
 
 // Custom log format
 const logFormat = winston.format.combine(
@@ -30,35 +31,41 @@ const consoleFormat = winston.format.combine(
     })
 );
 
-const logsDir = path.resolve(__dirname, '..', 'logs');
+// Build transports array - ALWAYS include Console so Railway/Heroku can see logs
+const transports = [
+    new winston.transports.Console({
+        format: consoleFormat,
+    }),
+];
 
-const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
-    format: logFormat,
-    transports: [
-        // Write all logs to combined.log
+// Only add file transports if we can create the logs directory
+try {
+    const logsDir = path.resolve(__dirname, '..', 'logs');
+    if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+    }
+    transports.push(
         new winston.transports.File({
             filename: path.join(logsDir, 'combined.log'),
-            maxsize: 5 * 1024 * 1024, // 5MB
+            maxsize: 5 * 1024 * 1024,
             maxFiles: 5,
         }),
-        // Write error logs to error.log
         new winston.transports.File({
             filename: path.join(logsDir, 'error.log'),
             level: 'error',
             maxsize: 5 * 1024 * 1024,
             maxFiles: 5,
-        }),
-    ],
-});
-
-// Add console transport in development
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(
-        new winston.transports.Console({
-            format: consoleFormat,
         })
     );
+} catch (e) {
+    // File logging not available (e.g. Railway ephemeral FS) - console only
+    console.warn('File logging disabled:', e.message);
 }
+
+const logger = winston.createLogger({
+    level: process.env.LOG_LEVEL || 'info',
+    format: logFormat,
+    transports,
+});
 
 module.exports = logger;
