@@ -12,6 +12,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const app = express();
+app.set('trust proxy', 1);
 
 // ═══════════════════════════════════════════════════════════════════════
 // STEP 1: CORS — MUST be the VERY FIRST middleware (before everything)
