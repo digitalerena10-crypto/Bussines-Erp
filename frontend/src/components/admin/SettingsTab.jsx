@@ -114,9 +114,9 @@ const SettingsTab = () => {
         }
     };
 
-    const handleDeactivate = () => {
+    const handleDeactivate = async () => {
         if (window.confirm("Are you sure you want to delete the current activation key? The application will be locked immediately and require a new key.")) {
-            deactivateLicense();
+            await deactivateLicense();
             // Optional: force reload or redirect to login (context handles navigation usually, or App will redirect)
             window.location.reload(); 
         }
