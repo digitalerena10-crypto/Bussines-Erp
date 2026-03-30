@@ -27,8 +27,20 @@ poolConfig.connectionTimeoutMillis = 5000;
 const _realPool = isMock ? null : new Pool(poolConfig);
 
 if (_realPool) {
-    _realPool.on('connect', () => logger.debug('New PG client connected'));
-    _realPool.on('error', (err) => logger.error('Idle PG client error', { error: err.message }));
+    _realPool.on('connect', () => logger.debug('New PostgreSQL client session established'));
+    _realPool.on('error', (err) => logger.error('Unexpected error on idle PG client', { error: err.message }));
+
+    // Execute an immediate diagnostic connection test on app startup
+    _realPool.query('SELECT NOW()')
+        .then(() => {
+            logger.info(`✅ PostgreSQL Database Connected Successfully!`);
+            logger.info(`🔌 Connection Mode: ${env.db.connectionString ? 'DATABASE_URL (Railway)' : 'Individual Variables (DB_HOST)'}`);
+        })
+        .catch(err => {
+            logger.error('❌ Failed to connect to PostgreSQL Database on startup!');
+            logger.error(`Error details: ${err.message}`);
+            // We do not crash here. The safe fallback in errorHandler will handle API requests gracefully.
+        });
 }
 
 // ─── Safe query: tries real DB, falls back to mock ───────────────────

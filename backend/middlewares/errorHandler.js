@@ -20,10 +20,25 @@ const errorHandler = (err, req, res, _next) => {
         logger.warn(`[${req.method}] ${req.originalUrl} — ${statusCode} ${err.message}`);
     }
 
-    // Build response
+    // Check if error is a Database error (pg codes or missing relations)
+    const isDbError = err.code || err.routine || (err.message && err.message.toLowerCase().includes('relation'));
+    const isGetRequest = req.method === 'GET';
+
+    // Safe fallback: If DB fails on a GET request, return empty array instead of crashing
+    if (isDbError && isGetRequest && statusCode >= 500) {
+        return res.status(200).json({
+            success: false,
+            message: 'Database unavailable or table missing. Safe fallback to empty list.',
+            data: [],
+            count: 0,
+            originalError: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+
+    // Build standard response
     const response = {
         success: false,
-        message: isOperational ? err.message : 'Internal server error',
+        message: isOperational ? err.message : (isDbError ? 'Database error occurred' : 'Internal server error'),
         ...(err.details && { details: err.details }),
     };
 
